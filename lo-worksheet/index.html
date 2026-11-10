@@ -581,6 +581,29 @@ body.client .mx-pc li.off{display:none}
 /* (Nov 10) "Yours to keep" bar segment: see-through tint so it reads as money not spent */
 .mx-snap-bars .bar i.keep{background:rgba(28,151,174,.16); border:1.5px dashed #1C97AE; box-shadow:none}
 .mx-snap-bars .bar i.keep span{color:#127C8F; font-weight:800}
+
+/* ---- "One new payment" three-card layout (Nov 10) ---- */
+.mx-pocards-row .mx-npcards{grid-column:2/-1}
+body.client .mx-pocards-row .mx-npcards{grid-column:1/-1}
+.mx-npcards{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin:4px 0 6px}
+body.client .mx-npcards:has(.mx-np.cardoff){grid-template-columns:1fr 1fr}
+body.client .mx-np.cardoff{display:none}
+.mx-np.cardoff{opacity:.38}
+.mx-pc-h .eye{margin-right:6px; vertical-align:-3px}
+.mx-np{border-radius:16px; padding:20px 22px 18px; display:flex; flex-direction:column; break-inside:avoid; page-break-inside:avoid;
+  background:linear-gradient(315deg,#1C97AE 0%,#127C8F 100%); color:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.mx-np .mx-pc-h{color:#E3F5F9}
+.mx-np-big{margin:4px 0 0; font:800 44px/1 var(--font-head); letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.mx-np-big small{font:600 16px var(--font-head); margin-left:4px; color:#E3F5F9; letter-spacing:0}
+.mx-np ul{list-style:none; margin:auto 0 0; padding:14px 0 0; border-top:1px solid rgba(255,255,255,.3); display:flex; flex-direction:column; gap:9px; margin-top:18px}
+.mx-np li{display:flex; align-items:center; gap:8px; font-size:14px; color:#E3F5F9}
+.mx-np li .nm{flex:1} .mx-np li b{color:#fff; font-weight:800; font-variant-numeric:tabular-nums}
+.mx-np li.off{opacity:.45} body.client .mx-np li.off{display:none}
+.mx-np .eye{color:#E3F5F9}
+.mx-np.neg{background:#fff; color:var(--ink); border:1px solid var(--line)} .mx-np.neg .mx-pc-h{color:#C2362B} .mx-np.neg .mx-np-big small{color:var(--muted)} .mx-np.neg .eye{color:var(--muted)}
+.mx-pc.new li .eye{color:#C9D6DF}
+@media screen and (max-width:820px){.mx-npcards, body.client .mx-npcards:has(.mx-np.cardoff){grid-template-columns:1fr}}
+.mx-pc ul{margin-bottom:16px} .mx-pc-tot{margin-top:auto}
 </style>
 </head>
 <body>
@@ -1294,15 +1317,7 @@ function renderDC(){
   h+=sect('Everything being paid off');
   h+=mxPayoffCards({debts, curMtg, tiDirect, newTot, oldTot});
   h+=`<div class="gap"></div>`;
-  h+=sect('One new payment')+`<div class="srow mx-colrow"><span></span><span></span><div class="mx-colh now">What you pay now</div><div class="mx-colh new">What you’ll pay</div><div class="mx-colh sav">What you save</div></div>`;
-  { const rd=+(c.rate-c.nrate).toFixed(3); h+=srow('rate','Interest rate', fmtPct(c.rate), fmtPct(c.nrate), {delta: rd>0 ? {id:'d_rate', val:fmtPct(rd)+' lower', good:true} : null}); }
-  if(c.newArm) h+=srow('n_armtype','New Loan Type', null, c.newArm.label+' ARM', {sub:'fixed '+c.newArm.years+' yrs · 30-yr amortization · adjusts after'});
-  h+=srow('pi','Principal &amp; interest', null, fmt$2(newPI), {defHide:true});
-  if(t==='fha') h+=srow('mi', miLbl, null, fmt$2(mi)); /* no MI on conv (80% cap) or VA cash-out */
-  h+=srow('esc','Taxes &amp; insurance', null, c.waive?'waived':fmt$2(c.esc.monthly), {defHide:true});
-  h+=srow('tot','Total monthly payment', fmt$2(oldTot), fmt$2(newTot), {curCls:'bad', neuCls:'save', delta:{id:'d_msave', val:fmt$2(save)+'/mo', good:save>=0}});
-  { const k='dc:ysave'; if(save>1000) S.hidden[k]=false; else if(!(k in S.hidden)) S.hidden[k]=true; } /* $1,000+/mo: always show the annual number */
-  h+=srow('ysave','Savings per year', null, fmt$(save*12), {neuCls:save>=0?'save':'bad'});
+  h+=sect('One new payment')+mxNewPayCards({rate:c.rate, nrate:c.nrate, arm:c.newArm, pi:newPI, mi:(t==='fha'?mi:null), miLbl:(t==='fha'?miLbl:''), waive:c.waive, esc:c.esc.monthly, oldTot, newTot, save});
   h+=`<div class="gap"></div><div class="mx-keep">`+sect('Savings')+mxChartRow({debts, curMtg:curMtg+tiDirect, curEsc:c.curEsc+tiDirect, remMo:Math.max(0,gv('dc_term',360)-c.made), newTot, arm:!!c.newArm})+`</div>`+mxDisclosures();
   /* New loan build section removed from the LO worksheet; costs still roll into the loan amount */
   let checks=pill(isFinite(ltv)&&ltv<=maxLtv,'LTV '+(isFinite(ltv)?ltv.toFixed(1):'—')+'% vs '+maxLtv+'% cap')
@@ -1497,6 +1512,45 @@ function mxPayoffCards(o){
       <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.oldTot)}</b></div></div>
     <div class="mx-pc new"><p class="mx-pc-h">After closing — 1 payment</p><ul><li class="one"><span class="nm">Mortgage</span><b>${fmt$(o.newTot)}</b></li>${R}</ul>
       <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.newTot)}</b></div></div>
+  </div></div>`;
+}
+
+/* ---------- "One new payment" as three cards: today · after closing · what you save (Robert, Nov 10) ---------- */
+const mxSign={};
+function mxNewPayCards(o){
+  const st=(id,def)=>{ const key=S.product+':'+id; if(!(key in S.hidden)) S.hidden[key]=!!def; return {key, off:S.hidden[key]}; };
+  const eye=s=>`<button class="eye" data-eye="${s.key}" title="${s.off?'Hidden from client — click to show':'Click to hide from client'}">${s.off?EYEOFF:EYE}</button>`;
+  const line=(s,lbl,val,cls='')=>`<li class="${s.off?'off':''} ${cls}">${eye(s)}<span class="nm">${lbl}</span><b>${val}</b></li>`;
+  /* left: today */
+  const sRate=st('rate',false);
+  const L=line(sRate,'Interest rate',fmtPct(o.rate));
+  /* middle: after closing */
+  let M=line(sRate,'Interest rate',fmtPct(o.nrate));
+  if(o.arm) M+=line(st('n_armtype',false),'Loan type',o.arm.label+' ARM');
+  M+=line(st('pi',true),'Principal &amp; interest',fmt$(o.pi));
+  if(o.mi!=null) M+=line(st('mi',false),o.miLbl,fmt$(o.mi));
+  M+=line(st('esc',true),'Taxes &amp; insurance',o.waive?'Paid on your own':fmt$(o.esc));
+  /* right: what you save */
+  const good=o.save>=0, kM=S.product+':d_msave';
+  if(!(kM in S.hidden)) S.hidden[kM]=!good;
+  if(kM in mxSign && mxSign[kM]!==good) S.hidden[kM]=!good;
+  mxSign[kM]=good;
+  const sSave={key:kM, off:S.hidden[kM]};
+  const rd=+(o.rate-o.nrate).toFixed(3);
+  const yk=S.product+':ysave'; if(o.save>1000) S.hidden[yk]=false; else if(!(yk in S.hidden)) S.hidden[yk]=true;
+  let SV='';
+  if(rd>0) SV+=line(st('d_rate',false),'Lower rate',fmtPct(rd));
+  if(good) SV+=line({key:yk,off:S.hidden[yk]},'Every year',fmt$(o.save*12));
+  const savOff=sSave.off;
+  const sav=`<div class="mx-np sav ${good?'':'neg'} ${savOff?'cardoff':''}"><p class="mx-pc-h">${eye(sSave)}${good?'What you save':'Payment change'}</p>
+      <p class="mx-np-big">${good?fmt$(o.save):'+'+fmt$(-o.save)}<small>/mo</small></p>
+      ${SV?`<ul>${SV}</ul>`:''}</div>`;
+  return `<div class="srow mx-pocards-row"><span></span><div class="mx-npcards">
+    <div class="mx-pc now"><p class="mx-pc-h">Today</p><ul>${L}</ul>
+      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.oldTot)}</b></div></div>
+    <div class="mx-pc new"><p class="mx-pc-h">After closing</p><ul>${M}</ul>
+      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.newTot)}</b></div></div>
+    ${sav}
   </div></div>`;
 }
 
