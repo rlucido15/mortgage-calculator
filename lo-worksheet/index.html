@@ -604,6 +604,9 @@ body.client .mx-npcards .cardoff{display:none}
 .mx-pc.new li .eye{color:#C9D6DF}
 @media screen and (max-width:820px){.mx-npcards.cols3,.mx-npcards.cols2{grid-template-columns:1fr}}
 .mx-pc ul{margin-bottom:16px} .mx-pc-tot{margin-top:auto}
+/* (Nov 10) Today = one continuous bar, two colors */
+.mx-snap-bars .bar.one{gap:0; border-radius:7px; overflow:hidden}
+.mx-snap-bars .bar.one i{border-radius:0}
 </style>
 </head>
 <body>
@@ -1434,10 +1437,6 @@ function mxChartRow(o){
     <div class="mx-ch-hero ${good?'':'neg'}">
       <div><p class="mx-ch-k">${good?'Your '+yl+' savings':yl+' difference'}</p><p class="mx-ch-num">${good?'':'−'}${fmt$(Math.abs(save10)).replace('−','')}</p>
         <p class="mx-ch-s">${good?`That’s about ${fmt$(perMo)} a month back in your pocket, on average, versus keeping your current mortgage and every one of these debts.`:'Over '+Y+' years, keeping the current mortgage and debts would cost less than the new loan.'}</p></div>
-      <div class="mx-ch-cmp" aria-label="${yl} totals">
-        <div class="r"><span class="l">Keep everything</span><span class="b"><i style="width:${pct(K[Y])};background:#F46744"></i></span><b>${fmt$(K[Y])}</b></div>
-        <div class="r"><span class="l">New loan</span><span class="b"><i style="width:${pct(N[Y])};background:#0E2A47"></i></span><b>${fmt$(N[Y])}</b></div>
-        <p>Total paid over ${Y} years</p></div>
     </div>
     <div class="mx-ch-plot">
     <p class="mx-ch-cap">Savings build up year by year</p>
@@ -1471,7 +1470,7 @@ function mxSnapshot(o){
     <p class="mx-snap-h">${good?`You’d pay <b>${fmt$(o.save)} less</b> every month`:`Your new payment would be <b>${fmt$(-o.save)} more</b> a month`}</p>
     <p class="mx-snap-s">Today you make <b>${n} payment${n===1?'':'s'}</b> a month. With your new loan, you make <b>1</b>.</p>
     <div class="mx-snap-bars">
-      <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg+(o.tiDirect||0),'mtg',tTxt(o.tiDirect>0?'Mortgage + taxes &amp; ins.':'Mortgage',o.curMtg+(o.tiDirect||0)))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
+      <div class="r"><span class="l">Today</span><div class="bar one">${seg(o.curMtg+(o.tiDirect||0),'mtg',tTxt(o.tiDirect>0?'Mortgage + taxes &amp; ins.':'Mortgage',o.curMtg+(o.tiDirect||0)))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
       <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> Yours to keep '+fmt$(o.save),'Keep '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
     </div>
   </div></div>`;
