@@ -607,6 +607,13 @@ body.client .mx-npcards .cardoff{display:none}
 /* (Nov 10) Today = one continuous bar, two colors */
 .mx-snap-bars .bar.one{gap:0; border-radius:7px; overflow:hidden}
 .mx-snap-bars .bar.one i{border-radius:0}
+/* (Nov 10) savings hero: sentence on the number's line, right-aligned; tighter */
+.mx-ch-hero{padding:14px 20px; align-items:flex-end}
+.mx-ch-hero>div:first-child{flex:0 1 auto}
+.mx-ch-sw{flex:1 1 280px; display:flex; justify-content:flex-end}
+.mx-ch-sw .mx-ch-s{text-align:right; max-width:400px; margin-bottom:4px}
+.mx-ch-num{margin-bottom:0}
+@media screen and (max-width:560px){.mx-ch-sw{justify-content:flex-start} .mx-ch-sw .mx-ch-s{text-align:left}}
 </style>
 </head>
 <body>
@@ -1432,18 +1439,18 @@ function mxChartRow(o){
   const mx=Math.max(K[Y],N[Y])||1, pct=v=>(v/mx*100).toFixed(1)+'%';
   const rows=K.map((v,i)=>i&&i<=Y?`<tr><td>Year ${i}</td><td>${fmt$(v)}</td><td>${fmt$(N[i])}</td><td>${fmt$(v-N[i])}</td></tr>`:'').join('');
   const perMo=Math.round(Math.abs(save10)/(12*Y));
+  mxChartNote = off ? '' : `${Y<10&&!none?`Shown through year ${Y}, the last year the new loan comes out ahead. `:''}Keep everything = today’s mortgage payment plus each debt’s payment until it would be paid off (cards at ${P.cardApr}% APR, other loans at ${P.loanApr}%)${P.total?`; ${P.ended} of ${P.total} debts would be paid off within 10 years`:''}. New loan = the one new payment, taxes and insurance included${o.arm?', shown at the ARM’s initial rate':''}. Estimates only.`;
   return `<div class="srow mx-chrow ${off?'off':''}"><button class="eye" data-eye="${key}" title="${off?'Hidden from client — click to show':'Click to hide from client'}">${off?EYEOFF:EYE}</button>
   <div class="mx-ch">
     <div class="mx-ch-hero ${good?'':'neg'}">
-      <div><p class="mx-ch-k">${good?'Your '+yl+' savings':yl+' difference'}</p><p class="mx-ch-num">${good?'':'−'}${fmt$(Math.abs(save10)).replace('−','')}</p>
-        <p class="mx-ch-s">${good?`That’s about ${fmt$(perMo)} a month back in your pocket, on average, versus keeping your current mortgage and every one of these debts.`:'Over '+Y+' years, keeping the current mortgage and debts would cost less than the new loan.'}</p></div>
+      <div><p class="mx-ch-k">${good?'Your '+yl+' savings':yl+' difference'}</p><p class="mx-ch-num">${good?'':'−'}${fmt$(Math.abs(save10)).replace('−','')}</p></div>
+      <div class="mx-ch-sw"><p class="mx-ch-s">${good?`That’s about ${fmt$(perMo)} a month back in your pocket, on average, versus keeping your current mortgage and every one of these debts.`:'Over '+Y+' years, keeping the current mortgage and debts would cost less than the new loan.'}</p></div>
     </div>
     <div class="mx-ch-plot">
     <p class="mx-ch-cap">Savings build up year by year</p>
     <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative savings: ${fmt$(Sv[1])} after year 1, ${fmt$(save10)} after year ${Y}." data-mx="${esc(data)}" data-geo="${[L,pw].join(',')}">
       <g class="mx-ch-grid">${grid}</g><rect class="mx-ch-hl" x="0" y="${T}" width="${slot.toFixed(1)}" height="${ph}" visibility="hidden"/>${bars}<g class="mx-ch-ticks">${ticks}</g><g class="mx-ch-lbl">${labels}</g>
     </svg><div class="mx-ch-tip" hidden></div></div>
-    <p class="mx-ch-note">${Y<10&&!none?`Shown through year ${Y}, the last year the new loan comes out ahead. `:''}Keep everything = today’s mortgage payment plus each debt’s payment until it would be paid off (cards at ${P.cardApr}% APR, other loans at ${P.loanApr}%)${P.total?`; ${P.ended} of ${P.total} debts would be paid off within 10 years`:''}. New loan = the one new payment, taxes and insurance included${o.arm?', shown at the ARM’s initial rate':''}. Estimates only.</p>
     <details class="mx-ch-table"><summary>Show the numbers</summary><table><thead><tr><th>By</th><th>Keep everything</th><th>New loan</th><th>Savings</th></tr></thead><tbody>${rows}</tbody></table></details>
   </div></div>`;
 }
@@ -1493,6 +1500,7 @@ function mxDisclosures(){
     <p><b>Estimate only.</b> This worksheet is an estimate for discussion purposes. It is not a Loan Estimate, an offer or commitment to lend, or a rate lock. Rates, terms, payments and fees are subject to change and to credit approval, underwriting, appraisal, title and property and program eligibility. Your Loan Estimate will show the actual terms and costs.</p>
     <p><b>Rate and payment.</b> The interest rate shown is the note rate, not the annual percentage rate (APR); the APR, which includes certain loan costs, may be higher. The new payment includes estimated principal and interest, property taxes and homeowners insurance, and mortgage insurance where shown. Taxes and insurance are estimates and may change; escrow amounts are set at closing.</p>
     <p><b>Consolidating debt into your mortgage.</b> Paying off other debts with your mortgage turns unsecured or shorter-term debt into debt secured by your home. If you do not make your mortgage payments, you could lose your home to foreclosure. Spreading these debts over a longer loan term may lower your monthly payment while increasing the total interest you pay over the life of the loan. Closing costs financed into the loan increase the amount you owe.</p>
+    ${mxChartNote?`<p><b>Savings chart.</b> ${mxChartNote}</p>`:''}
     <p><b>Savings estimates.</b> Monthly savings compare your current payments with the estimated new payment. The 10-year projection assumes current payments continue until each debt would be paid off (credit cards at ${fmtPct(card)} APR, other loans at ${fmtPct(loan)} APR) and does not account for closing costs, future changes in rates, taxes or insurance, or new borrowing. Your results may differ.</p>
     <p class="mx-disc-lic">${eho}<span>Moxie Mortgage is a division of NEXA Mortgage, LLC (NEXA Lending). NMLS #1660690 · AZ Mortgage Banker License #0944059 · 5559 S Sossaman Rd, Bldg 1, Ste 101, Mesa, AZ 85212. Verify licensing at www.nmlsconsumeraccess.org. Equal Opportunity Lender.</span></p>
   </div>`;
@@ -1522,6 +1530,7 @@ function mxPayoffCards(o){
 
 /* ---------- "One new payment" as three cards: today · after closing · what you save (Robert, Nov 10) ---------- */
 const mxSign={};
+let mxChartNote='';
 function mxNewPayCards(o){
   const st=(id,def)=>{ const key=S.product+':'+id; if(!(key in S.hidden)) S.hidden[key]=!!def; return {key, off:S.hidden[key]}; };
   const eye=s=>`<button class="eye" data-eye="${s.key}" title="${s.off?'Hidden from client — click to show':'Click to hide from client'}">${s.off?EYEOFF:EYE}</button>`;
