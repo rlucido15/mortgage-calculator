@@ -553,6 +553,31 @@ body.client .rgrid{justify-items:stretch}
 .mx-disc-lic{display:flex; gap:10px; align-items:flex-start; margin-top:10px !important; padding-top:10px; border-top:1px solid var(--line)}
 .mx-eho{width:26px; height:26px; flex:none; color:var(--ink)}
 @media print{ .mx-disc2 p{break-inside:avoid} }
+
+/* ---- "Everything being paid off" two-card layout (Nov 10) ---- */
+.mx-pocards-row .mx-pocards{grid-column:2/-1}
+body.client .mx-pocards-row .mx-pocards{grid-column:1/-1}
+.mx-pocards{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:4px 0 6px}
+.mx-pc{border-radius:16px; padding:20px 22px 18px; display:flex; flex-direction:column; break-inside:avoid; page-break-inside:avoid}
+.mx-pc.now{background:#fff; border:1px solid var(--line)}
+.mx-pc.new{background:#0E2A47; color:#fff; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.mx-pc-h{margin:0 0 12px; font:800 12px var(--font-head); letter-spacing:.12em; text-transform:uppercase}
+.mx-pc.now .mx-pc-h{color:#C2362B} .mx-pc.new .mx-pc-h{color:#7FDCEC}
+.mx-pc ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px}
+.mx-pc li{display:flex; align-items:center; gap:8px; font-size:14px; line-height:1.3}
+.mx-pc li .nm{flex:1; min-width:0}
+.mx-pc li b{font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.mx-pc li .eye{flex:none; margin-left:-4px}
+.mx-pc li.off{opacity:.38} .mx-pc li.off .eye{color:var(--bad)}
+body.client .mx-pc li.off{display:none}
+.mx-pc.new li{color:#C9D6DF} .mx-pc.new li.one{color:#fff; font-weight:700}
+.mx-pc.new li .ck{color:#C9D6DF; font-weight:700}
+.mx-pc-tot{margin-top:auto; padding-top:14px; border-top:1px solid var(--line); display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-top:16px}
+.mx-pc.new .mx-pc-tot{border-top-color:rgba(255,255,255,.18)}
+.mx-pc-tot span{font-size:13px; color:var(--muted)} .mx-pc.new .mx-pc-tot span{color:#C9D6DF}
+.mx-pc-tot b{font:800 30px/1 var(--font-head); letter-spacing:-.01em; font-variant-numeric:tabular-nums}
+.mx-pc.now .mx-pc-tot b{color:#C2362B} .mx-pc.new .mx-pc-tot b{color:#7FDCEC}
+@media (max-width:640px){.mx-pocards{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -1265,10 +1290,7 @@ function renderDC(){
   let h='';
   h+=mxSnapshot({debts, curMtg, tiDirect, newTot, oldTot, save});
   h+=sect('Everything being paid off');
-  debts.forEach((d,i)=>{ h+=srow('d_'+i, esc(d.name)||('Debt '+(i+1)), fmt$2(d.pay)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ Paid off</span>', {neuCls:'paid', sub:fmt$(d.bal)+' owed'}); });
-  h+=srow('d_mtg','Mortgage payment', fmt$2(curMtg)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ Paid off</span>', {neuCls:'paid', sub:fmt$(c.payoff)+' payoff'});
-  if(tiDirect>0) h+=srow('d_ti','Taxes &amp; insurance', fmt$2(tiDirect)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ In new payment</span>', {neuCls:'paid', sub:'paid on their own today', keepSub:true});
-  h+=srow('d_tot','Current monthly total', fmt$2(oldTot)+'<span class="mini">/mo</span>', null, {curCls:'bad'});
+  h+=mxPayoffCards({debts, curMtg, tiDirect, newTot, oldTot});
   h+=`<div class="gap"></div>`;
   h+=sect('One new payment')+`<div class="srow mx-colrow"><span></span><span></span><div class="mx-colh now">What you pay now</div><div class="mx-colh new">What you’ll pay</div><div class="mx-colh sav">What you save</div></div>`;
   { const rd=+(c.rate-c.nrate).toFixed(3); h+=srow('rate','Interest rate', fmtPct(c.rate), fmtPct(c.nrate), {delta: rd>0 ? {id:'d_rate', val:fmtPct(rd)+' lower', good:true} : null}); }
@@ -1427,9 +1449,9 @@ function mxSnapshot(o){
     <p class="mx-snap-s">Today you make <b>${n} payment${n===1?'':'s'}</b> a month. With your new loan, you make <b>1</b>.</p>
     <div class="mx-snap-bars">
       <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg+(o.tiDirect||0),'mtg',tTxt(o.tiDirect>0?'Mortgage + taxes &amp; ins.':'Mortgage',o.curMtg+(o.tiDirect||0)))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
-      <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> You save '+fmt$(o.save),'Save '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
+      <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> Yours to keep '+fmt$(o.save),'Keep '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
     </div>
-    <div class="mx-snap-key"><span><i class="mtg"></i>Mortgage</span>${debtPay>0?'<span><i class="debt"></i>Cards &amp; loans</span>':''}<span><i class="new"></i>New payment</span>${good?'<span><i class="keep"></i>Your monthly savings</span>':''}</div>
+    <div class="mx-snap-key"><span><i class="mtg"></i>Mortgage</span>${debtPay>0?'<span><i class="debt"></i>Cards &amp; loans</span>':''}<span><i class="new"></i>New payment</span>${good?'<span><i class="keep"></i>Yours to keep</span>':''}</div>
   </div></div>`;
 }
 
@@ -1453,6 +1475,28 @@ function mxDisclosures(){
     <p><b>Savings estimates.</b> Monthly savings compare your current payments with the estimated new payment. The 10-year projection assumes current payments continue until each debt would be paid off (credit cards at ${fmtPct(card)} APR, other loans at ${fmtPct(loan)} APR) and does not account for closing costs, future changes in rates, taxes or insurance, or new borrowing. Your results may differ.</p>
     <p class="mx-disc-lic">${eho}<span>Moxie Mortgage is a division of NEXA Mortgage, LLC (NEXA Lending). NMLS #1660690 · AZ Mortgage Banker License #0944059 · 5559 S Sossaman Rd, Bldg 1, Ste 101, Mesa, AZ 85212. Verify licensing at www.nmlsconsumeraccess.org. Equal Opportunity Lender.</span></p>
   </div>`;
+}
+
+/* ---------- "Everything being paid off" as two cards: today's payments vs the one new payment (Robert, Nov 10) ---------- */
+function mxPayoffCards(o){
+  const rows=[];
+  if(o.curMtg>0) rows.push({id:'d_mtg', name:'Mortgage', pay:o.curMtg, mtg:true});
+  o.debts.forEach((d,i)=>rows.push({id:'d_'+i, name:esc(d.name)||('Debt '+(i+1)), pay:d.pay||0}));
+  if(o.tiDirect>0) rows.push({id:'d_ti', name:'Taxes &amp; insurance', pay:o.tiDirect, ti:true});
+  const n=o.debts.filter(d=>d.pay>0).length+(o.curMtg>0?1:0);
+  const st=r=>{ const key=S.product+':'+r.id; if(!(key in S.hidden)) S.hidden[key]=false; return {key, off:S.hidden[key]}; };
+  const eye=(s)=>`<button class="eye" data-eye="${s.key}" title="${s.off?'Hidden from client — click to show':'Click to hide from client'}">${s.off?EYEOFF:EYE}</button>`;
+  let L='', R='';
+  rows.forEach(r=>{ const s=st(r);
+    L+=`<li class="${s.off?'off':''}">${eye(s)}<span class="nm">${r.name}</span><b>${fmt$(r.pay)}</b></li>`;
+    if(!r.mtg) R+=`<li class="${s.off?'off':''}"><span class="nm">${r.ti?'Taxes &amp; insurance — included':r.name+' — paid off'}</span><b class="ck" aria-hidden="true">✓</b></li>`;
+  });
+  return `<div class="srow mx-pocards-row"><span></span><div class="mx-pocards">
+    <div class="mx-pc now"><p class="mx-pc-h">Today — ${n} payment${n===1?'':'s'}</p><ul>${L}</ul>
+      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.oldTot)}</b></div></div>
+    <div class="mx-pc new"><p class="mx-pc-h">Your new loan — 1 payment</p><ul><li class="one"><span class="nm">One simple payment</span><b>${fmt$(o.newTot)}</b></li>${R}</ul>
+      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.newTot)}</b></div></div>
+  </div></div>`;
 }
 
 full();
