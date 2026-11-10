@@ -1398,47 +1398,53 @@ function mxProject(o){
 function mxNiceMax(v){ if(!(v>0)) return 1000; const p=Math.pow(10,Math.floor(Math.log10(v))); const f=v/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
 function mxK(v){ return v>=1e6?'$'+(v/1e6).toFixed(v%1e6?1:0)+'M':v>=1000?'$'+Math.round(v/1000)+'K':'$'+Math.round(v); }
 function mxChartRow(o){
-  const P=mxProject(o), K=P.K, N=P.N, Sv=K.map((v,i)=>v-N[i]), save10=Sv[10], good=save10>=0;
+  const P=mxProject(o), K=P.K, N=P.N, Sv=K.map((v,i)=>v-N[i]);
+  /* show only the years the new loan is ahead: stop before the first year cumulative savings go negative (Robert, Nov 10) */
+  let Y=10; for(let i=1;i<=10;i++) if(Sv[i]<0){ Y=i-1; break; }
+  const none=Y===0; if(none) Y=10;
+  const save10=Sv[Y], good=save10>=0, yl=Y+'-year';
   /* cumulative savings columns, years 1-10, zero baseline */
   const W=860,H=250,L=62,R=24,T=34,B=30, pw=W-L-R, ph=H-T-B;
-  const hi=Math.max(0,...Sv), lo=Math.min(0,...Sv), span=mxNiceMax((hi-lo)*1.08)||1000;
+  const SvY=Sv.slice(0,Y+1), hi=Math.max(0,...SvY), lo=Math.min(0,...SvY), span=mxNiceMax((hi-lo)*1.08)||1000;
   const top=hi>0?Math.ceil(hi*1.12/(span/4))*(span/4):0, bot=lo<0?-Math.ceil(-lo*1.12/(span/4))*(span/4):0, rng=(top-bot)||1;
-  const y=v=>T+ph*(top-v)/rng, slot=pw/10, bw=Math.min(40,slot*0.62);
+  const y=v=>T+ph*(top-v)/rng, slot=pw/Y, bw=Math.min(40,slot*0.62), mid=Y>=5?Math.round(Y/2):0;
   let grid='', ticks='', bars='', labels='';
   for(let v=bot; v<=top+1e-6; v+=span/4){ const yy=y(v).toFixed(1);
     grid+=`<line x1="${L}" x2="${L+pw}" y1="${yy}" y2="${yy}"${Math.abs(v)<1e-6?' class="z"':''}/>`;
     ticks+=`<text x="${L-8}" y="${(+yy+4).toFixed(1)}" text-anchor="end">${v<0?'−':''}${mxK(Math.abs(v))}</text>`; }
-  for(let i=1;i<=10;i++){
+  for(let i=1;i<=Y;i++){
     const v=Sv[i], cx=L+slot*(i-0.5), x0=cx-bw/2, y0=y(Math.max(v,0)), y1=y(Math.min(v,0)), h=Math.max(1,y1-y0), r=Math.min(5,h/2);
-    const pos=v>=0, col=pos?(i===10?'#127C8F':'#1C97AE'):'#F46744';
+    const pos=v>=0, col=pos?(i===Y?'#127C8F':'#1C97AE'):'#F46744';
     /* rounded data end, square at the baseline */
     const d=pos?`M${x0} ${y1} V${y0+r} Q${x0} ${y0} ${x0+r} ${y0} H${x0+bw-r} Q${x0+bw} ${y0} ${x0+bw} ${y0+r} V${y1} Z`
                :`M${x0} ${y0} V${y1-r} Q${x0} ${y1} ${x0+r} ${y1} H${x0+bw-r} Q${x0+bw} ${y1} ${x0+bw} ${y1-r} V${y0} Z`;
     bars+=`<path d="${d}" fill="${col}" data-i="${i}"/>`;
     ticks+=`<text x="${cx.toFixed(1)}" y="${H-8}" text-anchor="middle">Yr ${i}</text>`;
-    if(i===1||i===5||i===10) labels+=`<text class="${i===10?'big':''}" x="${cx.toFixed(1)}" y="${(pos?y0-8:y1+16).toFixed(1)}" text-anchor="middle">${v<0?'−':''}${fmt$(Math.abs(v)).replace('−','')}</text>`;
+    if(i===1||i===mid||i===Y) labels+=`<text class="${i===Y?'big':''}" x="${cx.toFixed(1)}" y="${(pos?y0-8:y1+16).toFixed(1)}" text-anchor="middle">${v<0?'−':''}${fmt$(Math.abs(v)).replace('−','')}</text>`;
   }
-  const data=JSON.stringify({K:K.map(Math.round),N:N.map(Math.round)});
-  const key='dc:x_chart'; if(!(key in S.hidden)) S.hidden[key]=false; const off=S.hidden[key];
-  const mx=Math.max(K[10],N[10])||1, pct=v=>(v/mx*100).toFixed(1)+'%';
-  const rows=K.map((v,i)=>i?`<tr><td>Year ${i}</td><td>${fmt$(v)}</td><td>${fmt$(N[i])}</td><td>${fmt$(v-N[i])}</td></tr>`:'').join('');
-  const perMo=Math.round(Math.abs(save10)/120);
+  const data=JSON.stringify({K:K.map(Math.round),N:N.map(Math.round),Y});
+  const key='dc:x_chart'; if(!(key in S.hidden)) S.hidden[key]=none;
+  if(key in mxSign && mxSign[key]!==none) S.hidden[key]=none; /* no year ahead: hidden from the client until the LO shows it */
+  mxSign[key]=none; const off=S.hidden[key];
+  const mx=Math.max(K[Y],N[Y])||1, pct=v=>(v/mx*100).toFixed(1)+'%';
+  const rows=K.map((v,i)=>i&&i<=Y?`<tr><td>Year ${i}</td><td>${fmt$(v)}</td><td>${fmt$(N[i])}</td><td>${fmt$(v-N[i])}</td></tr>`:'').join('');
+  const perMo=Math.round(Math.abs(save10)/(12*Y));
   return `<div class="srow mx-chrow ${off?'off':''}"><button class="eye" data-eye="${key}" title="${off?'Hidden from client — click to show':'Click to hide from client'}">${off?EYEOFF:EYE}</button>
   <div class="mx-ch">
     <div class="mx-ch-hero ${good?'':'neg'}">
-      <div><p class="mx-ch-k">${good?'Your 10-year savings':'10-year difference'}</p><p class="mx-ch-num">${good?'':'−'}${fmt$(Math.abs(save10)).replace('−','')}</p>
-        <p class="mx-ch-s">${good?`That’s about ${fmt$(perMo)} a month back in your pocket, on average, versus keeping your current mortgage and every one of these debts.`:'Over 10 years, keeping the current mortgage and debts would cost less than the new loan.'}</p></div>
-      <div class="mx-ch-cmp" aria-label="10-year totals">
-        <div class="r"><span class="l">Keep everything</span><span class="b"><i style="width:${pct(K[10])};background:#F46744"></i></span><b>${fmt$(K[10])}</b></div>
-        <div class="r"><span class="l">New loan</span><span class="b"><i style="width:${pct(N[10])};background:#0E2A47"></i></span><b>${fmt$(N[10])}</b></div>
-        <p>Total paid over 10 years</p></div>
+      <div><p class="mx-ch-k">${good?'Your '+yl+' savings':yl+' difference'}</p><p class="mx-ch-num">${good?'':'−'}${fmt$(Math.abs(save10)).replace('−','')}</p>
+        <p class="mx-ch-s">${good?`That’s about ${fmt$(perMo)} a month back in your pocket, on average, versus keeping your current mortgage and every one of these debts.`:'Over '+Y+' years, keeping the current mortgage and debts would cost less than the new loan.'}</p></div>
+      <div class="mx-ch-cmp" aria-label="${yl} totals">
+        <div class="r"><span class="l">Keep everything</span><span class="b"><i style="width:${pct(K[Y])};background:#F46744"></i></span><b>${fmt$(K[Y])}</b></div>
+        <div class="r"><span class="l">New loan</span><span class="b"><i style="width:${pct(N[Y])};background:#0E2A47"></i></span><b>${fmt$(N[Y])}</b></div>
+        <p>Total paid over ${Y} years</p></div>
     </div>
     <div class="mx-ch-plot">
     <p class="mx-ch-cap">Savings build up year by year</p>
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative savings: ${fmt$(Sv[1])} after year 1, ${fmt$(Sv[5])} after year 5, ${fmt$(save10)} after year 10." data-mx="${esc(data)}" data-geo="${[L,pw].join(',')}">
+    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Cumulative savings: ${fmt$(Sv[1])} after year 1, ${fmt$(save10)} after year ${Y}." data-mx="${esc(data)}" data-geo="${[L,pw].join(',')}">
       <g class="mx-ch-grid">${grid}</g><rect class="mx-ch-hl" x="0" y="${T}" width="${slot.toFixed(1)}" height="${ph}" visibility="hidden"/>${bars}<g class="mx-ch-ticks">${ticks}</g><g class="mx-ch-lbl">${labels}</g>
     </svg><div class="mx-ch-tip" hidden></div></div>
-    <p class="mx-ch-note">Keep everything = today’s mortgage payment plus each debt’s payment until it would be paid off (cards at ${P.cardApr}% APR, other loans at ${P.loanApr}%)${P.total?`; ${P.ended} of ${P.total} debts would be paid off within 10 years`:''}. New loan = the one new payment, taxes and insurance included${o.arm?', shown at the ARM’s initial rate':''}. Estimates only.</p>
+    <p class="mx-ch-note">${Y<10&&!none?`Shown through year ${Y}, the last year the new loan comes out ahead. `:''}Keep everything = today’s mortgage payment plus each debt’s payment until it would be paid off (cards at ${P.cardApr}% APR, other loans at ${P.loanApr}%)${P.total?`; ${P.ended} of ${P.total} debts would be paid off within 10 years`:''}. New loan = the one new payment, taxes and insurance included${o.arm?', shown at the ARM’s initial rate':''}. Estimates only.</p>
     <details class="mx-ch-table"><summary>Show the numbers</summary><table><thead><tr><th>By</th><th>Keep everything</th><th>New loan</th><th>Savings</th></tr></thead><tbody>${rows}</tbody></table></details>
   </div></div>`;
 }
@@ -1447,7 +1453,7 @@ document.addEventListener('mousemove',e=>{
   const svg=e.target.closest&&e.target.closest('.mx-ch svg');
   if(!svg){ document.querySelectorAll('.mx-ch-tip').forEach(t=>t.hidden=true); document.querySelectorAll('.mx-ch-hl').forEach(l=>l.setAttribute('visibility','hidden')); return; }
   const d=JSON.parse(svg.dataset.mx), g=svg.dataset.geo.split(',').map(Number), r=svg.getBoundingClientRect(), sc=r.width/860;
-  const px=(e.clientX-r.left)/sc, i=Math.max(1,Math.min(10,Math.floor((px-g[0])/(g[1]/10))+1)), slot=g[1]/10;
+  const Yn=d.Y||10, px=(e.clientX-r.left)/sc, i=Math.max(1,Math.min(Yn,Math.floor((px-g[0])/(g[1]/Yn))+1)), slot=g[1]/Yn;
   const hl=svg.querySelector('.mx-ch-hl'); hl.setAttribute('x',g[0]+slot*(i-1)); hl.setAttribute('visibility','visible');
   const tip=svg.parentElement.querySelector('.mx-ch-tip'); const s=d.K[i]-d.N[i];
   tip.innerHTML=`<b>After year ${i}</b><span class="${s>=0?'g':'r'}">${s>=0?'Saved':'Difference'} ${fmt$(s)}</span><span><i style="background:#F46744"></i>Keep everything ${fmt$(d.K[i])}</span><span><i style="background:#7FDCEC"></i>New loan ${fmt$(d.N[i])}</span>`;
