@@ -830,7 +830,7 @@ function renderInputs(){
     ${newLoanBlock('dc',{nrate:'6.125',armOpts:t==='conv'?['5/1','7/1','10/1','5/6','7/6','10/6']:['3/1','5/1','7/1','10/1']})}
     <div hidden>${feeBlock('dc',false)}</div>
     ${escrowBlock('dc')}
-    <details class="mx-adv"><summary>Additional settings</summary><div class="mx-adv-body"><p class="mx-adv-h">Homeowners insurance</p><div class="f"><label for="dc_hoim">HOI due month</label><select id="dc_hoim"><option value="auto" selected>Auto</option>${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><p class="mx-adv-h">Property taxes</p><div id="mxAdvTax"></div><p class="mx-adv-h">Prepared by (prints in the disclosures)</p><div class="f"><label for="dc_loname">Loan officer name</label><input id="dc_loname" data-d="name" maxlength="80"></div><div class="f"><label for="dc_lonmls">LO NMLS #</label><input id="dc_lonmls" data-d="name" inputmode="numeric" maxlength="12"></div><p class="mx-adv-h">10-year savings chart</p>${numF('dc_cardapr','Credit card APR %','22','Used to estimate when each card would have been paid off.')}${numF('dc_loanapr','Other debt APR %','9','Auto, student, personal loans and HELOCs.')}</div></details>
+    <details class="mx-adv"><summary>Additional settings</summary><div class="mx-adv-body"><p class="mx-adv-h">Homeowners insurance</p><div class="f"><label for="dc_hoim">HOI due month</label><select id="dc_hoim"><option value="auto" selected>Auto</option>${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><p class="mx-adv-h">Property taxes</p><div id="mxAdvTax"></div><p class="mx-adv-h">10-year savings chart</p>${numF('dc_cardapr','Credit card APR %','22','Used to estimate when each card would have been paid off.')}${numF('dc_loanapr','Other debt APR %','9','Auto, student, personal loans and HELOCs.')}</div></details>
   </div></div>`;
   }
   $('#inputs').innerHTML=html;
@@ -1444,12 +1444,9 @@ function mxFitSnap(){
 /* ---------- disclosures (bottom of the sheet, both views, printed) ---------- */
 function mxDisclosures(){
   const card=gv('dc_cardapr',22), loan=gv('dc_loanapr',9);
-  const lon=(document.getElementById('dc_loname')||{}).value||'', lonm=(document.getElementById('dc_lonmls')||{}).value||'';
-  const prep=(lon||lonm)?`<p class="mx-disc-prep">Prepared by ${esc(lon.trim()).slice(0,80)}${lonm?`${lon?', ':''}NMLS #${esc(String(lonm).replace(/[^0-9]/g,'')).slice(0,12)}`:''}, Moxie Mortgage.</p>`:'';
   const eho='<svg class="mx-eho" viewBox="0 0 40 40" aria-hidden="true"><path d="M20 4 3 17h4v18h26V17h4z" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="12" y="19" width="16" height="3.5" fill="currentColor"/><rect x="12" y="26" width="16" height="3.5" fill="currentColor"/></svg>';
   return `<div class="mx-disc2">
     <p class="mx-disc-h">Important information</p>
-    ${prep}
     <p><b>Estimate only.</b> This worksheet is an estimate for discussion purposes. It is not a Loan Estimate, an offer or commitment to lend, or a rate lock. Rates, terms, payments and fees are subject to change and to credit approval, underwriting, appraisal, title and property and program eligibility. Your Loan Estimate will show the actual terms and costs.</p>
     <p><b>Rate and payment.</b> The interest rate shown is the note rate, not the annual percentage rate (APR); the APR, which includes certain loan costs, may be higher. The new payment includes estimated principal and interest, property taxes and homeowners insurance, and mortgage insurance where shown. Taxes and insurance are estimates and may change; escrow amounts are set at closing.</p>
     <p><b>Consolidating debt into your mortgage.</b> Paying off other debts with your mortgage turns unsecured or shorter-term debt into debt secured by your home. If you do not make your mortgage payments, you could lose your home to foreclosure. Spreading these debts over a longer loan term may lower your monthly payment while increasing the total interest you pay over the life of the loan. Closing costs financed into the loan increase the amount you owe.</p>
