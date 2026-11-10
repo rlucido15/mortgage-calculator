@@ -614,6 +614,26 @@ body.client .mx-npcards .cardoff{display:none}
 .mx-ch-sw .mx-ch-s{text-align:right; max-width:400px; margin-bottom:4px}
 .mx-ch-num{margin-bottom:0}
 @media screen and (max-width:560px){.mx-ch-sw{justify-content:flex-start} .mx-ch-sw .mx-ch-s{text-align:left}}
+
+/* ---- (Nov 10) One new payment: two matched cards ---- */
+.mx-npcards.cols2{grid-template-columns:1fr 1fr} .mx-npcards.cols1{grid-template-columns:minmax(0,560px)}
+.mx-np2{border-radius:18px; padding:22px 26px 20px; display:flex; flex-direction:column; break-inside:avoid; page-break-inside:avoid; -webkit-print-color-adjust:exact; print-color-adjust:exact; color:#fff}
+.mx-np2.new{background:#0E2A47}
+.mx-np2.sav{background:linear-gradient(315deg,#1C97AE 0%,#127C8F 100%)}
+.mx-np2 .mx-pc-h{margin:0 0 6px} .mx-np2.new .mx-pc-h{color:#7FDCEC} .mx-np2.sav .mx-pc-h{color:#E3F5F9}
+.mx-np2 .mx-np-big{margin:0; font:800 46px/1 var(--font-head); letter-spacing:-.02em; font-variant-numeric:tabular-nums}
+.mx-np2.new .mx-np-big{color:#fff}
+.mx-np2 .mx-np-big small{font:600 16px var(--font-head); margin-left:4px; color:#C9D6DF; letter-spacing:0}
+.mx-np2.sav .mx-np-big small{color:#E3F5F9}
+.mx-np2 ul{list-style:none; margin:18px 0 0; padding:14px 0 0; border-top:1px solid rgba(255,255,255,.22); display:flex; flex-direction:column; gap:9px}
+.mx-np2 li{display:flex; align-items:center; gap:8px; font-size:14px; color:#C9D6DF}
+.mx-np2.sav li{color:#E3F5F9}
+.mx-np2 li .nm{flex:1; min-width:0} .mx-np2 li b{color:#fff; font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap}
+.mx-np2 .eye{color:#C9D6DF; flex:none} .mx-np2 .mx-pc-h .eye{margin-right:6px; vertical-align:-3px}
+.mx-np2 li.off{opacity:.45} body.client .mx-np2 li.off{display:none}
+.mx-np2.neg{background:#fff; color:var(--ink); border:1px solid var(--line)} .mx-np2.neg .mx-pc-h{color:#C2362B} .mx-np2.neg .mx-np-big small{color:var(--muted)} .mx-np2.neg .eye{color:var(--muted)}
+@media screen and (max-width:700px){.mx-npcards.cols2{grid-template-columns:1fr}}
+body.client .mx-keep:has(.mx-chrow.off){display:none}
 </style>
 </head>
 <body>
@@ -1534,17 +1554,14 @@ let mxChartNote='';
 function mxNewPayCards(o){
   const st=(id,def)=>{ const key=S.product+':'+id; if(!(key in S.hidden)) S.hidden[key]=!!def; return {key, off:S.hidden[key]}; };
   const eye=s=>`<button class="eye" data-eye="${s.key}" title="${s.off?'Hidden from client — click to show':'Click to hide from client'}">${s.off?EYEOFF:EYE}</button>`;
-  const line=(s,lbl,val,cls='')=>`<li class="${s.off?'off':''} ${cls}">${eye(s)}<span class="nm">${lbl}</span><b>${val}</b></li>`;
-  /* left: today */
-  const sRate=st('rate',false);
-  const L=line(sRate,'Interest rate',fmtPct(o.rate));
-  /* middle: after closing */
-  let M=line(sRate,'Interest rate',fmtPct(o.nrate));
+  const line=(s,lbl,val)=>`<li class="${s.off?'off':''}">${eye(s)}<span class="nm">${lbl}</span><b>${val}</b></li>`;
+  /* after closing: the new payment, then what's in it */
+  let M=line(st('rate',false),'Interest rate',fmtPct(o.nrate));
   if(o.arm) M+=line(st('n_armtype',false),'Loan type',o.arm.label+' ARM');
   M+=line(st('pi',true),'Principal &amp; interest',fmt$(o.pi));
   if(o.mi!=null) M+=line(st('mi',false),o.miLbl,fmt$(o.mi));
   M+=line(st('esc',true),'Taxes &amp; insurance',o.waive?'Paid on your own':fmt$(o.esc));
-  /* right: what you save */
+  /* what you save */
   const good=o.save>=0, kM=S.product+':d_msave';
   if(!(kM in S.hidden)) S.hidden[kM]=!good;
   if(kM in mxSign && mxSign[kM]!==good) S.hidden[kM]=!good;
@@ -1555,23 +1572,14 @@ function mxNewPayCards(o){
   let SV='';
   if(rd>0) SV+=line(st('d_rate',false),'Lower rate',fmtPct(rd));
   if(good) SV+=line({key:yk,off:S.hidden[yk]},'Every year',fmt$(o.save*12));
-  const savOff=sSave.off;
-  /* Today card: auto-hidden when the new rate is higher than today's (LO can reveal it with the eye) */
-  const up=o.nrate>o.rate, kT=S.product+':np_today';
-  if(!(kT in S.hidden)) S.hidden[kT]=up;
-  if(kT in mxSign && mxSign[kT]!==up) S.hidden[kT]=up;
-  mxSign[kT]=up;
-  const sToday={key:kT, off:S.hidden[kT]};
-  const cols=S.client ? 1+(sToday.off?0:1)+(savOff?0:1) : 3;
-  const sav=`<div class="mx-np sav ${good?'':'neg'} ${savOff?'cardoff':''}"><p class="mx-pc-h">${eye(sSave)}${good?'What you save':'Payment change'}</p>
-      <p class="mx-np-big">${good?fmt$(o.save):'+'+fmt$(-o.save)}<small>/mo</small></p>
-      ${SV?`<ul>${SV}</ul>`:''}</div>`;
+  const cols=(S.client&&sSave.off)?1:2;
   return `<div class="srow mx-pocards-row"><span></span><div class="mx-npcards cols${cols}">
-    <div class="mx-pc now ${sToday.off?'cardoff':''}"><p class="mx-pc-h">${eye(sToday)}Today</p><ul>${L}</ul>
-      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.oldTot)}</b></div></div>
-    <div class="mx-pc new"><p class="mx-pc-h">After closing</p><ul>${M}</ul>
-      <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.newTot)}</b></div></div>
-    ${sav}
+    <div class="mx-np2 new"><p class="mx-pc-h">After closing</p>
+      <p class="mx-np-big">${fmt$(o.newTot)}<small>/mo</small></p>
+      <ul>${M}</ul></div>
+    <div class="mx-np2 sav ${good?'':'neg'} ${sSave.off?'cardoff':''}"><p class="mx-pc-h">${eye(sSave)}${good?'What you save':'Payment change'}</p>
+      <p class="mx-np-big">${good?fmt$(o.save):'+'+fmt$(-o.save)}<small>/mo</small></p>
+      ${SV?`<ul>${SV}</ul>`:''}</div>
   </div></div>`;
 }
 
