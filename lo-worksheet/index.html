@@ -1261,7 +1261,7 @@ function renderDC(){
   h+=srow('d_tot','Current monthly total', fmt$2(oldTot)+'<span class="mini">/mo</span>', null, {curCls:'bad'});
   h+=`<div class="gap"></div>`;
   h+=sect('One new payment')+`<div class="srow mx-colrow"><span></span><span></span><div class="mx-colh now">What you pay now</div><div class="mx-colh new">What you’ll pay</div><div class="mx-colh sav">What you save</div></div>`;
-  { const rd=+(c.rate-c.nrate).toFixed(3); h+=srow('rate','Interest rate', fmtPct(c.rate), fmtPct(c.nrate), {delta:{id:'d_rate', val:rd===0?'Same rate':fmtPct(Math.abs(rd))+(rd>0?' lower':' higher'), good:rd>0?true:rd<0?false:null}}); }
+  { const rd=+(c.rate-c.nrate).toFixed(3); h+=srow('rate','Interest rate', fmtPct(c.rate), fmtPct(c.nrate), {delta: rd>0 ? {id:'d_rate', val:fmtPct(rd)+' lower', good:true} : null}); }
   if(c.newArm) h+=srow('n_armtype','New Loan Type', null, c.newArm.label+' ARM', {sub:'fixed '+c.newArm.years+' yrs · 30-yr amortization · adjusts after'});
   h+=srow('pi','Principal &amp; interest', null, fmt$2(newPI));
   if(t==='fha') h+=srow('mi', miLbl, null, fmt$2(mi)); /* no MI on conv (80% cap) or VA cash-out */
