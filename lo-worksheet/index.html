@@ -578,6 +578,9 @@ body.client .mx-pc li.off{display:none}
 .mx-pc-tot b{font:800 30px/1 var(--font-head); letter-spacing:-.01em; font-variant-numeric:tabular-nums}
 .mx-pc.now .mx-pc-tot b{color:#C2362B} .mx-pc.new .mx-pc-tot b{color:#7FDCEC}
 @media (max-width:640px){.mx-pocards{grid-template-columns:1fr}}
+/* (Nov 10) "Yours to keep" bar segment: see-through tint so it reads as money not spent */
+.mx-snap-bars .bar i.keep{background:rgba(28,151,174,.16); border:1.5px dashed #1C97AE; box-shadow:none}
+.mx-snap-bars .bar i.keep span{color:#127C8F; font-weight:800}
 </style>
 </head>
 <body>
@@ -602,7 +605,6 @@ body.client .mx-pc li.off{display:none}
 <div class="grid">
   <div class="inputs-col" id="inputs"></div>
   <div id="mxPrintArea">
-    <div class="clientbar">Refinance comparison prepared by your Moxie Mortgage loan officer.</div>
     <div id="results"></div>
     
   </div>
@@ -1451,7 +1453,6 @@ function mxSnapshot(o){
       <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg+(o.tiDirect||0),'mtg',tTxt(o.tiDirect>0?'Mortgage + taxes &amp; ins.':'Mortgage',o.curMtg+(o.tiDirect||0)))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
       <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> Yours to keep '+fmt$(o.save),'Keep '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
     </div>
-    <div class="mx-snap-key"><span><i class="mtg"></i>Mortgage</span>${debtPay>0?'<span><i class="debt"></i>Cards &amp; loans</span>':''}<span><i class="new"></i>New payment</span>${good?'<span><i class="keep"></i>Yours to keep</span>':''}</div>
   </div></div>`;
 }
 
@@ -1494,7 +1495,7 @@ function mxPayoffCards(o){
   return `<div class="srow mx-pocards-row"><span></span><div class="mx-pocards">
     <div class="mx-pc now"><p class="mx-pc-h">Today — ${n} payment${n===1?'':'s'}</p><ul>${L}</ul>
       <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.oldTot)}</b></div></div>
-    <div class="mx-pc new"><p class="mx-pc-h">Your new loan — 1 payment</p><ul><li class="one"><span class="nm">One simple payment</span><b>${fmt$(o.newTot)}</b></li>${R}</ul>
+    <div class="mx-pc new"><p class="mx-pc-h">After closing — 1 payment</p><ul><li class="one"><span class="nm">Mortgage</span><b>${fmt$(o.newTot)}</b></li>${R}</ul>
       <div class="mx-pc-tot"><span>Every month</span><b>${fmt$(o.newTot)}</b></div></div>
   </div></div>`;
 }
