@@ -538,6 +538,11 @@ body.client .shead .logo{grid-column:1 / span 2}
 
 /* ---- LO Panel removed: the sheet uses the full width of its column ---- */
 .rgrid{grid-template-columns:minmax(0,920px) !important}
+
+/* ---- on screen the sheet uses the available width (the PDF keeps its 920px Letter layout) ---- */
+.rgrid{grid-template-columns:minmax(0,1180px) !important; justify-content:center}
+.sheet{max-width:1180px}
+body.client .rgrid{justify-items:stretch}
 </style>
 </head>
 <body>
@@ -1244,13 +1249,15 @@ function renderDC(){
   const newPI=pmt(loan,c.nrate,c.nterm);
   const newTot=newPI+mi+c.esc.monthly;
   const curMtg=c.curPI+c.curMI+c.curEsc;
-  const oldTot=curMtg+debtPay;
+  const tiDirect=(!c.waive && !(c.curEsc>0)) ? c.esc.monthly : 0; /* not escrowed today: T&I paid directly */
+  const oldTot=curMtg+debtPay+tiDirect;
   const save=oldTot-newTot;
   let h='';
-  h+=mxSnapshot({debts, curMtg, newTot, oldTot, save});
+  h+=mxSnapshot({debts, curMtg, tiDirect, newTot, oldTot, save});
   h+=sect('Everything being paid off');
   debts.forEach((d,i)=>{ h+=srow('d_'+i, esc(d.name)||('Debt '+(i+1)), fmt$2(d.pay)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ Paid off</span>', {neuCls:'paid', sub:fmt$(d.bal)+' owed'}); });
   h+=srow('d_mtg','Mortgage payment', fmt$2(curMtg)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ Paid off</span>', {neuCls:'paid', sub:fmt$(c.payoff)+' payoff'});
+  if(tiDirect>0) h+=srow('d_ti','Taxes &amp; insurance', fmt$2(tiDirect)+'<span class="mini">/mo</span>', '<span class="mx-paid">✓ In new payment</span>', {neuCls:'paid', sub:'paid on their own today', keepSub:true});
   h+=srow('d_tot','Current monthly total', fmt$2(oldTot)+'<span class="mini">/mo</span>', null, {curCls:'bad'});
   h+=`<div class="gap"></div>`;
   h+=sect('One new payment')+`<div class="srow mx-colrow"><span></span><span></span><div class="mx-colh now">What you pay now</div><div class="mx-colh new">What you’ll pay</div><div class="mx-colh sav">What you save</div></div>`;
@@ -1262,7 +1269,7 @@ function renderDC(){
   h+=srow('tot','Total monthly payment', fmt$2(oldTot), fmt$2(newTot), {curCls:'bad', neuCls:'save', delta:{id:'d_msave', val:fmt$2(save)+'/mo', good:save>=0}});
   { const k='dc:ysave'; if(save>1000) S.hidden[k]=false; else if(!(k in S.hidden)) S.hidden[k]=true; } /* $1,000+/mo: always show the annual number */
   h+=srow('ysave','Savings per year', null, fmt$(save*12), {neuCls:save>=0?'save':'bad'});
-  h+=`<div class="gap"></div><div class="mx-keep">`+sect('Savings')+mxChartRow({debts, curMtg, curEsc:c.curEsc, remMo:Math.max(0,gv('dc_term',360)-c.made), newTot, arm:!!c.newArm})+`</div>`;
+  h+=`<div class="gap"></div><div class="mx-keep">`+sect('Savings')+mxChartRow({debts, curMtg:curMtg+tiDirect, curEsc:c.curEsc+tiDirect, remMo:Math.max(0,gv('dc_term',360)-c.made), newTot, arm:!!c.newArm})+`</div>`;
   /* New loan build section removed from the LO worksheet; costs still roll into the loan amount */
   let checks=pill(isFinite(ltv)&&ltv<=maxLtv,'LTV '+(isFinite(ltv)?ltv.toFixed(1):'—')+'% vs '+maxLtv+'% cap')
     +(t==='va'?pill(c.nclose>=addDays(c.firstPay,210),'VA seasoning 210d / 6 pmts')+pill(null,'Asked about disability exemption?')+pill(null,'IMPORTANT: VA allows 100% LTV but PRICE THE LOAN to confirm — many lenders overlay at 90%.'):'')
@@ -1409,7 +1416,7 @@ function mxSnapshot(o){
     <p class="mx-snap-h">${good?`You’d pay <b>${fmt$(o.save)} less</b> every month`:`Your new payment would be <b>${fmt$(-o.save)} more</b> a month`}</p>
     <p class="mx-snap-s">Today you make <b>${n} payment${n===1?'':'s'}</b> a month. With your new loan, you make <b>1</b>.</p>
     <div class="mx-snap-bars">
-      <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg,'mtg',tTxt('Mortgage',o.curMtg))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
+      <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg+(o.tiDirect||0),'mtg',tTxt(o.tiDirect>0?'Mortgage + taxes &amp; ins.':'Mortgage',o.curMtg+(o.tiDirect||0)))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
       <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> You save '+fmt$(o.save),'Save '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
     </div>
     <div class="mx-snap-key"><span><i class="mtg"></i>Mortgage</span>${debtPay>0?'<span><i class="debt"></i>Cards &amp; loans</span>':''}<span><i class="new"></i>New payment</span>${good?'<span><i class="keep"></i>Your monthly savings</span>':''}</div>
@@ -1783,7 +1790,7 @@ renderInputs = function () { _renderInputs(); arrangeSettings(); harden(); };
 function arrangeSettings() {
   ['dc_hoiauto', 'dc_hoimrow'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
   /* removed for the LO worksheet (Robert, Nov 9); each falls back to its old default: ARM off, holding off, net fund off, finance escrow on */
-  ['dc_arm', 'dc_holding', 'dc_netfund', 'dc_escfin'].forEach(id => { const el = document.getElementById(id); if (el) (el.closest('.f') || el).remove(); });
+  ['dc_arm', 'dc_holding', 'dc_netfund', 'dc_escfin', 'dc_escbal'].forEach(id => { const el = document.getElementById(id); if (el) (el.closest('.f') || el).remove(); });
   const tax = document.getElementById('dc_tax'), ts = document.getElementById('mxAdvTax');
   if (tax && ts) { const det = tax.closest('details'); const box = det ? det.querySelector('div') : null;
     if (box) { while (box.firstChild) ts.appendChild(box.firstChild); det.remove(); } }
