@@ -525,6 +525,19 @@ body.client .shead .logo{grid-column:1 / span 2}
 /* ---- sheet logo: Moxie blue wordmark with breathing room below ---- */
 .shead{margin-bottom:26px}
 .shead .logo{padding-bottom:4px}
+
+/* ---- snapshot: savings segment reads as savings ---- */
+.mx-snap-bars .bar i.keep{background:#127C8F; border:0; box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.mx-snap-bars .bar i.keep span{color:#fff; font-weight:800}
+.mx-snap-bars .bar i.keep span b{font-size:10px; margin-right:3px; position:relative; top:-1px}
+.mx-snap-key{display:flex; flex-wrap:wrap; gap:6px 16px; margin:2px 0 0 82px; font-size:12px; color:var(--muted)}
+.mx-snap-key span{display:inline-flex; align-items:center; gap:6px}
+.mx-snap-key i{width:12px; height:12px; border-radius:3px; display:inline-block}
+.mx-snap-key i.mtg{background:#F46744} .mx-snap-key i.debt{background:#FBC6B6} .mx-snap-key i.new{background:#0E2A47} .mx-snap-key i.keep{background:#127C8F}
+@media (max-width:560px){ .mx-snap-key{margin-left:0} }
+
+/* ---- LO Panel removed: the sheet uses the full width of its column ---- */
+.rgrid{grid-template-columns:minmax(0,920px) !important}
 </style>
 </head>
 <body>
@@ -802,7 +815,7 @@ function renderInputs(){
     ${newLoanBlock('dc',{nrate:'6.125',armOpts:t==='conv'?['5/1','7/1','10/1','5/6','7/6','10/6']:['3/1','5/1','7/1','10/1']})}
     <div hidden>${feeBlock('dc',false)}</div>
     ${escrowBlock('dc')}
-    <details class="mx-adv"><summary>Additional settings</summary><div class="mx-adv-body"><p class="mx-adv-h">Closing</p><div id="mxAdvHold"></div><p class="mx-adv-h">Homeowners insurance</p><div class="f"><label for="dc_hoim">HOI due month</label><select id="dc_hoim"><option value="auto" selected>Auto</option>${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><p class="mx-adv-h">Property taxes</p><div id="mxAdvTax"></div><p class="mx-adv-h">10-year savings chart</p>${numF('dc_cardapr','Credit card APR %','22','Used to estimate when each card would have been paid off.')}${numF('dc_loanapr','Other debt APR %','9','Auto, student, personal loans and HELOCs.')}</div></details>
+    <details class="mx-adv"><summary>Additional settings</summary><div class="mx-adv-body"><p class="mx-adv-h">Homeowners insurance</p><div class="f"><label for="dc_hoim">HOI due month</label><select id="dc_hoim"><option value="auto" selected>Auto</option>${MONTHS.map((m,i)=>`<option value="${i}">${m}</option>`).join('')}</select></div><p class="mx-adv-h">Property taxes</p><div id="mxAdvTax"></div><p class="mx-adv-h">10-year savings chart</p>${numF('dc_cardapr','Credit card APR %','22','Used to estimate when each card would have been paid off.')}${numF('dc_loanapr','Other debt APR %','9','Auto, student, personal loans and HELOCs.')}</div></details>
   </div></div>`;
   }
   $('#inputs').innerHTML=html;
@@ -859,8 +872,7 @@ function head(title){
 }
 function pill(ok,txt){ return `<span class="pill ${ok===true?'ok':ok===false?'no':'warn'}">${ok===true?'✓':ok===false?'✕':'!'} <b>${txt}</b></span>`; }
 function sheetOut(title, bodyHtml, checks, sugg, note){
-  $('#results').innerHTML=`<div class="rgrid"><div class="sheet">${head(title)}${bodyHtml}</div>
-    <aside class="lopanel lo-only"><div class="lp-h">LO Panel</div><div class="pills">${checks}</div>${sugg||''}<div class="note">${note}</div></aside></div>`;
+  $('#results').innerHTML=`<div class="rgrid"><div class="sheet">${head(title)}${bodyHtml}</div></div>`;
 }
 
 /* ---------- core compute ---------- */
@@ -1250,7 +1262,7 @@ function renderDC(){
   h+=srow('tot','Total monthly payment', fmt$2(oldTot), fmt$2(newTot), {curCls:'bad', neuCls:'save', delta:{id:'d_msave', val:fmt$2(save)+'/mo', good:save>=0}});
   { const k='dc:ysave'; if(save>1000) S.hidden[k]=false; else if(!(k in S.hidden)) S.hidden[k]=true; } /* $1,000+/mo: always show the annual number */
   h+=srow('ysave','Savings per year', null, fmt$(save*12), {neuCls:save>=0?'save':'bad'});
-  h+=`<div class="gap"></div><div class="mx-keep">`+sect('10-year savings')+mxChartRow({debts, curMtg, curEsc:c.curEsc, remMo:Math.max(0,gv('dc_term',360)-c.made), newTot, arm:!!c.newArm})+`</div>`;
+  h+=`<div class="gap"></div><div class="mx-keep">`+sect('Savings')+mxChartRow({debts, curMtg, curEsc:c.curEsc, remMo:Math.max(0,gv('dc_term',360)-c.made), newTot, arm:!!c.newArm})+`</div>`;
   /* New loan build section removed from the LO worksheet; costs still roll into the loan amount */
   let checks=pill(isFinite(ltv)&&ltv<=maxLtv,'LTV '+(isFinite(ltv)?ltv.toFixed(1):'—')+'% vs '+maxLtv+'% cap')
     +(t==='va'?pill(c.nclose>=addDays(c.firstPay,210),'VA seasoning 210d / 6 pmts')+pill(null,'Asked about disability exemption?')+pill(null,'IMPORTANT: VA allows 100% LTV but PRICE THE LOAN to confirm — many lenders overlay at 90%.'):'')
@@ -1390,7 +1402,7 @@ function mxSnapshot(o){
   const key='dc:x_snap'; if(!(key in S.hidden)) S.hidden[key]=false; const off=S.hidden[key];
   const debtPay=o.debts.reduce((s,d)=>s+(d.pay||0),0), n=o.debts.filter(d=>d.pay>0).length+(o.curMtg>0?1:0);
   const max=Math.max(o.oldTot,o.newTot)||1, w=v=>(Math.max(0,v)/max*100).toFixed(2)+'%', good=o.save>=0;
-  const seg=(v,cls,txt)=> v>0?`<i class="${cls}" style="width:${w(v)}" title="${txt.replace(/&amp;/g,'&')}"><span data-full="${txt}" data-short="${fmt$(v)}">${txt}</span></i>`:'';
+  const seg=(v,cls,txt,short)=> v>0?`<i class="${cls}" style="width:${w(v)}" title="${txt.replace(/&amp;/g,'&')}"><span data-full="${txt}" data-short="${short||fmt$(v)}">${txt}</span></i>`:'';
   const tTxt=(lbl,v)=>lbl+' '+fmt$(v);
   return `<div class="srow mx-snaprow ${off?'off':''}"><button class="eye" data-eye="${key}" title="${off?'Hidden from client — click to show':'Click to hide from client'}">${off?EYEOFF:EYE}</button>
   <div class="mx-snap ${good?'':'neg'}">
@@ -1398,8 +1410,9 @@ function mxSnapshot(o){
     <p class="mx-snap-s">Today you make <b>${n} payment${n===1?'':'s'}</b> a month. With your new loan, you make <b>1</b>.</p>
     <div class="mx-snap-bars">
       <div class="r"><span class="l">Today</span><div class="bar">${seg(o.curMtg,'mtg',tTxt('Mortgage',o.curMtg))}${seg(debtPay,'debt',tTxt('Cards &amp; loans',debtPay))}</div><b class="v bad">${fmt$(o.oldTot)}<small>/mo</small></b></div>
-      <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','You keep '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
+      <div class="r"><span class="l">New loan</span><div class="bar">${seg(o.newTot,'new',tTxt('One payment',o.newTot))}${good?seg(o.save,'keep','<b>▼</b> You save '+fmt$(o.save),'Save '+fmt$(o.save)):''}</div><b class="v save">${fmt$(o.newTot)}<small>/mo</small></b></div>
     </div>
+    <div class="mx-snap-key"><span><i class="mtg"></i>Mortgage</span>${debtPay>0?'<span><i class="debt"></i>Cards &amp; loans</span>':''}<span><i class="new"></i>New payment</span>${good?'<span><i class="keep"></i>Your monthly savings</span>':''}</div>
   </div></div>`;
 }
 
@@ -1769,8 +1782,8 @@ renderInputs = function () { _renderInputs(); arrangeSettings(); harden(); };
 /* Additional settings: holding, HOI month, property taxes live at the bottom; the auto/refi HOI rows are removed */
 function arrangeSettings() {
   ['dc_hoiauto', 'dc_hoimrow'].forEach(id => { const el = document.getElementById(id); if (el) el.remove(); });
-  const hold = document.getElementById('dc_holding'), hs = document.getElementById('mxAdvHold');
-  if (hold && hs) hs.appendChild(hold.closest('.f') || hold);
+  /* removed for the LO worksheet (Robert, Nov 9); each falls back to its old default: ARM off, holding off, net fund off, finance escrow on */
+  ['dc_arm', 'dc_holding', 'dc_netfund', 'dc_escfin'].forEach(id => { const el = document.getElementById(id); if (el) (el.closest('.f') || el).remove(); });
   const tax = document.getElementById('dc_tax'), ts = document.getElementById('mxAdvTax');
   if (tax && ts) { const det = tax.closest('details'); const box = det ? det.querySelector('div') : null;
     if (box) { while (box.firstChild) ts.appendChild(box.firstChild); det.remove(); } }
