@@ -127,7 +127,7 @@ tslib/tslib.es6.js:
 <script>
 (function () {
   var MX = window.MX || (window.MX = {});
-  if (MX.i18n) return;
+  if (MX.i18n && MX.i18n.v >= 3) return;   // an older embed's engine is replaced by this newer one
   var KEY = 'mx_lang', ATTRS = ['aria-label', 'title', 'placeholder', 'alt'];
   function saved() { try { return localStorage.getItem(KEY); } catch (e) { return null; } }
   function save(l) { try { localStorage.setItem(KEY, l); } catch (e) {} }
@@ -277,6 +277,7 @@ tslib/tslib.es6.js:
     } catch (e) {}
   }
   MX.i18n = {
+    v: 3,
     get lang() { return lang; },
     t: function (en, es) { return lang === 'es' ? es : en; },
     apply: apply, swap: swap, links: links, dict: dict, load: load,
@@ -298,7 +299,7 @@ tslib/tslib.es6.js:
 })();
 (function () {
   // Spanish: opens in ?lang=es, follows the parent page's EN/ES toggle, translates text in place so the calculator keeps working
-  function start() { MX.i18n.load(document.body, 'https://cdn.jsdelivr.net/gh/rlucido15/moxie-email-assets@e94f5d2/website/es/app-mortgage.json'); }
+  function start() { MX.i18n.load(document.body, 'https://cdn.jsdelivr.net/gh/rlucido15/moxie-email-assets@61f4488/website/es/app-mortgage.json'); }
   if (document.body) start(); else document.addEventListener('DOMContentLoaded', start);
   window.addEventListener('message', function (e) {
     if (!/^https:\/\/(www\.)?moxiemortgage\.com$/.test(e.origin)) return;
