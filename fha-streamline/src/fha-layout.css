@@ -1,0 +1,418 @@
+/* ===== Streamlined layout (Nov 14): verdict strip · essentials-first inputs · deal structure in the LO panel · three-block sheet.
+   Layout only — every number still comes from the calculator's own code. ===== */
+[hidden]{display:none !important}  /* fixes rows meant to hide (HOI month, 2nd tax month) showing anyway */
+
+/* ---- 1. verdict strip ---- */
+.mx-verdict{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:12px; margin:0 0 16px}
+body.client .mx-verdict{display:none}
+.mx-vt{background:#fff; border:1px solid var(--line); border-radius:16px; padding:14px 16px; display:flex; flex-direction:column; gap:4px; min-width:0; text-align:left; font:inherit; color:var(--ink)}
+.mx-vt .k{margin:0; font:800 11.5px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:var(--muted)}
+.mx-vt .big{margin:0; display:flex; align-items:center; gap:8px; font:800 24px/1.1 var(--font-head); font-variant-numeric:tabular-nums}
+.mx-vt .big svg{width:22px; height:22px; flex:none; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round}
+.mx-vt .s{margin:0; font-size:12.5px; color:var(--muted); line-height:1.35}
+.mx-vt.pass .big{color:#127C8F}
+.mx-vt.fail{background:var(--orange-tint); border-color:#F7A68F} .mx-vt.fail .big{color:var(--navy)}
+.mx-vt.hero{background:linear-gradient(315deg,#1C97AE 0%,#127C8F 100%); border-color:transparent; color:#fff}
+.mx-vt.hero .k,.mx-vt.hero .s{color:#E3F5F9}
+.mx-vt.hero.neg{background:#fff; color:var(--ink); border-color:#F7A68F} .mx-vt.hero.neg .k,.mx-vt.hero.neg .s{color:var(--muted)}
+.mx-vt.rev{cursor:pointer}
+.mx-vt.rev.fail .k{color:#B4532F}
+.mx-vt.rev.warnonly{background:#FFF6F2; border-color:#F9C9B9}
+.mx-vt.rev .big{font-size:15px; font-weight:700; line-height:1.3; font-family:var(--font-body)}
+.mx-vt.rev .s b{color:var(--navy); text-decoration:underline; text-decoration-color:var(--orange)}
+.mx-vt.rev:focus-visible{outline:3px solid var(--moxie); outline-offset:2px}
+
+/* ---- 2. essentials-first inputs ---- */
+.mx-ess h2{display:flex; justify-content:space-between; align-items:baseline}
+.mx-ess h2 span{font:700 12px var(--font-body); letter-spacing:0; text-transform:none; color:#127C8F}
+.mx-ess h2 span.miss{color:var(--bad)}
+.mx-grp{margin:0 0 8px; font:700 11.5px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:var(--moxie-deep)}
+.mx-grp.second{margin-top:12px}
+.mx-essrow > .hint{display:none}
+.mx-more{background:var(--sheet); border:1px solid var(--line); border-radius:16px; padding:2px 18px; margin-top:14px}
+.mx-sec{border-top:1px solid var(--line)} .mx-sec:first-child{border-top:0}
+.mx-sec > summary{cursor:pointer; list-style:none; display:flex; justify-content:space-between; align-items:center; gap:10px; padding:12px 0; color:var(--ink) !important; letter-spacing:0 !important}
+.mx-sec > summary::-webkit-details-marker{display:none}
+.mx-sec > summary b{font:800 12px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:var(--navy); white-space:nowrap}
+.mx-sec > summary span{font-size:12.5px; color:var(--muted); text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0}
+.mx-sec > summary span::after{content:' ›'; color:var(--moxie-deep); font-weight:700}
+.mx-sec[open] > summary span::after{content:' ⌄'}
+.mx-sec-body{padding:2px 0 10px}
+
+/* ---- 3. deal structure in the LO panel ---- */
+.lopanel{display:flex; flex-direction:column; gap:0}
+.mx-ack{margin:6px 0 2px}
+.mx-ack .togglebtn{width:100%; min-height:44px; padding:8px 10px; border-radius:10px}
+.mx-deal{margin-top:14px; padding-top:12px; border-top:1px solid var(--line)}
+.mx-deal .srow{grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; margin:0; padding:7px 0; border-bottom:1px solid #EEF3F5; align-items:center}
+.mx-deal .srow > .eye, .mx-deal .srow > .vbox.blank, .mx-deal .srow > span:first-child{display:none !important}
+.mx-deal .srow.off{opacity:1}
+.mx-deal .lblc{background:transparent; padding:0; font:600 13px var(--font-body); border-radius:0; display:block}
+.mx-deal .lblc .sub{display:block !important; margin:1px 0 0; font-size:11px}
+.mx-deal .vbox{border:0; background:transparent; min-height:0; padding:0; font:700 13.5px var(--font-body); justify-content:flex-end; text-align:right}
+.mx-deal .vbox.save{color:#127C8F; background:transparent}
+.mx-deal .vbox.bad{background:transparent; color:var(--bad)}
+.mx-deal .vbox.togglebtn{border:0; border-radius:999px; padding:6px 12px; background:var(--moxie); color:#fff; font:700 12.5px var(--font-body)}
+.mx-deal .vbox.togglebtn:not(.on){background:#EAF3F6; color:var(--navy)}
+.mx-deal .srow.mx-zero{display:none !important}
+.mx-deal .showmore-row{padding:8px 0 0; border:0}
+.mx-deal .showmore-row .addbtn{width:100%; min-height:40px; margin:0}
+.mx-assume{margin-top:12px; border-top:1px solid var(--line)}
+.mx-assume > summary{cursor:pointer; padding:10px 0 4px; font:800 12px var(--font-head) !important; letter-spacing:.12em !important; text-transform:uppercase; color:var(--navy) !important}
+.mx-assume .note{padding-top:4px}
+
+/* ---- 4. three-block sheet ---- */
+.lblc.mx-totl{background:var(--navy); color:#fff}
+.srow.mx-tot .vbox{font-size:16.5px; font-weight:800}
+.vbox .mx-vs{display:block; font-size:11px; font-weight:500; color:var(--muted); margin-top:1px}
+.vbox{flex-direction:column}
+.dcell{flex-direction:row}
+.mx-hidden-line{margin:12px 0 0 34px; font-size:12.5px; color:var(--muted)}
+.mx-hidden-line button{border:0; background:none; padding:0; color:var(--moxie-deep); font:700 12.5px var(--font-body); text-decoration:underline; cursor:pointer}
+body:not(.client):not(.mx-showhid) .sheet .srow.off:not(.missingrow){display:none}
+body.client .mx-hidden-line{display:none}
+
+.mx-deal .showmore-row{grid-column:1/-1 !important}
+.mx-vt .s{display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden}
+
+.lopanel{position:static; max-height:none; overflow:visible}
+@media (max-width:560px){ .mx-verdict{grid-template-columns:1fr 1fr} .mx-vt.hero,.mx-vt.rev{grid-column:1/-1} .mx-vt .big{font-size:20px} }
+
+/* ===================== Calmer color system (Nov 14, pass 2) =====================
+   Navy = structure. Moxie blue/teal = the good news, used on the few numbers that matter.
+   Orange = needs attention (missing, failing, costs more). Everything else stays neutral. */
+.lblc{background:#F4F8FA}
+.vbox{border-color:#DCE6EB}
+.shead .colhead, .shead .colhead:last-child{background:transparent; color:var(--navy); border-radius:0; min-height:40px; border-bottom:2px solid var(--navy);
+  font:800 12.5px var(--font-head); letter-spacing:.12em; text-transform:uppercase; align-self:end}
+.shead .colhead:last-child{color:#127C8F; border-bottom-color:#1C97AE}
+.secttl{color:var(--navy)} .secttl::before{background:#B8CDD6}
+.vbox.save, .dcell.save{color:#127C8F; background:#fff; border-color:#DCE6EB; font-weight:800}
+.vbox.bad, .dcell.bad{color:#9A3F1E; background:#FEF0EB; border-color:#F7A68F; font-weight:800}
+.dcell.mx-trade{color:var(--muted); background:#fff; border-color:#DCE6EB; font-weight:600}
+.lblc.mx-totl{background:#F4F8FA; color:var(--navy); font-weight:800}
+.srow.mx-tot .vbox{border-color:#B8CDD6; border-width:1.5px}
+.srow.mx-tot .vbox.save, .srow.mx-tot .dcell.save{background:#EEF8FA; border-color:#9BD3DF}
+.missingrow .lblc{background:#FEF0EB; color:var(--navy); box-shadow:inset 3px 0 0 #F46744; font-weight:800}
+.missingrow .lblc .sub{color:#9A3F1E}
+.missingrow .vbox{border-color:#F46744; border-width:1.5px; color:#9A3F1E}
+.cnote{background:#F4F8FA; border:0; color:var(--ink); font-weight:600}
+.eye{color:#9FB2BC}
+/* verdict */
+.mx-vt.hero, .mx-vt.hero.neg{background:#fff; border-color:var(--line); color:var(--ink)}
+.mx-vt.hero .k, .mx-vt.hero .s{color:var(--muted)}
+.mx-vt.hero .big{color:#127C8F; font-size:28px}
+.mx-vt.hero.neg{background:#FEF0EB; border-color:#F7A68F} .mx-vt.hero.neg .big{color:#9A3F1E}
+.mx-vt.fail .big{color:#9A3F1E}
+.mx-vt.rev.warnonly{background:#fff; border-color:var(--line); box-shadow:inset 4px 0 0 #F9A58F}
+.mx-vt.rev.fail .k{color:#9A3F1E}
+/* inputs */
+.mx-grp{color:var(--muted)}
+.mx-ess h2 span{color:var(--muted)} .mx-ess h2 span.miss{color:#9A3F1E}
+.mx-sec > summary span::after{color:var(--muted)}
+/* LO panel */
+.pill.ok{background:transparent; color:#127C8F; padding-left:0; box-shadow:none}
+.pill.warn{background:#fff; color:var(--navy); box-shadow:inset 3px 0 0 #F9A58F}
+.pill.no{background:#FEF0EB; color:var(--navy); box-shadow:inset 3px 0 0 #F46744}
+.ackbtn{border-color:#F46744; color:#9A3F1E; background:#fff}
+.ackbtn.on{background:#F4F8FA; color:var(--navy); border-color:#DCE6EB}
+.mx-deal .vbox.save{color:var(--ink)}
+.mx-deal .vbox.togglebtn{background:var(--navy)}
+.mx-deal .showmore-row .addbtn{border:1px solid var(--line); color:var(--navy)}
+.sugg{border:0; border-top:1px solid var(--line); border-radius:0; padding:12px 0 0; margin-top:14px}
+.sugg .sugg-h{color:var(--navy)} .sugg li b{color:var(--navy)}
+
+/* ===================== Client view — designed like the Debt Consolidation client sheet ===================== */
+.mx-cv{display:none}
+body.client .mx-cv{display:block}
+body.client .sheet > .srow:not(.shead), body.client .sheet > .gap, body.client .sheet > .mx-hidden-line{display:none !important}
+body.client .shead .colhead{display:none}
+body.client .clientbar, body.client .disc{display:none !important}
+.mx-cvdate{display:none}
+body.client .mx-cvdate{display:block; grid-column:-3/-1; align-self:end; justify-self:end; text-align:right; font-size:12px; color:var(--muted)}
+.mx-cvdate span{display:block; font-size:11px; opacity:.85}
+body.client .sheet{max-width:1100px}
+.cv-card{border:1px solid var(--line); border-radius:16px; background:#fff}
+.cv-snap{padding:18px 20px 16px; background:linear-gradient(135deg,#EEF8FA 0%,#fff 70%)}
+.cv-snap.neg{background:#FEF0EB}
+.cv-h{margin:0; font:800 24px/1.2 var(--font-head); color:var(--ink); letter-spacing:-.01em}
+.cv-h b{color:#127C8F} .cv-snap.neg .cv-h b{color:var(--navy); text-decoration:underline; text-decoration-color:#F46744; text-decoration-thickness:3px}
+.cv-s{margin:4px 0 14px; font-size:13.5px; color:var(--muted)} .cv-s b{color:var(--ink)}
+.cv-bars .r{display:grid; grid-template-columns:76px 1fr 108px; align-items:center; gap:12px; margin-bottom:10px}
+.cv-bars .l{font:700 13px var(--font-body)}
+.cv-bars .bar{display:flex; gap:0; height:34px; min-width:0; border-radius:7px; overflow:hidden}
+.cv-bars .bar i{display:flex; align-items:center; justify-content:center; height:100%; font-style:normal; min-width:6px; overflow:hidden}
+.cv-bars .bar i span{font:700 12.5px var(--font-body); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding:0 8px}
+.cv-bars i.now{background:#F46744; color:var(--navy)}
+.cv-bars i.new{background:#0E2A47; color:#fff}
+.cv-bars i.keep{background:rgba(28,151,174,.16); border:1.5px dashed #1C97AE; border-radius:0 7px 7px 0; color:#127C8F; font-weight:800}
+.cv-bars .v{font:800 17px var(--font-body); text-align:right; font-variant-numeric:tabular-nums} .cv-bars .v small{font-size:11px; font-weight:600; color:var(--muted); margin-left:2px}
+.cv-bars .v.now{color:var(--navy)} .cv-bars .v.new{color:#127C8F}
+.cv-loan{display:flex; align-items:center; gap:10px 16px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--line)}
+.cv-loan > p{margin:0; width:110px; font:800 11.5px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:#127C8F}
+.cv-loan dl{margin:0; flex:1; display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+.cv-loan dl > div{background:#fff; border:1px solid var(--line); border-radius:10px; padding:8px 12px}
+.cv-loan dt{font-size:11.5px; color:var(--muted)}
+.cv-loan dd{margin:1px 0 0; font:800 17px var(--font-head); color:var(--ink); font-variant-numeric:tabular-nums}
+.cv-loan dd small{margin-left:6px; font:700 11.5px var(--font-body); color:#127C8F}
+.cv-sect{display:flex; align-items:center; gap:8px; margin:24px 0 10px; font:800 11.5px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:#127C8F}
+.cv-sect::before{content:''; width:18px; height:3px; border-radius:2px; background:#F46744}
+.cv-two{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+.cv-pc{border-radius:16px; padding:20px 22px 18px; display:flex; flex-direction:column; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+.cv-pc.now{background:#fff; border:1px solid var(--line)} .cv-pc.new{background:#0E2A47; color:#fff}
+.cv-pc h3{margin:0 0 12px; font:800 12px var(--font-head); letter-spacing:.12em; text-transform:uppercase}
+.cv-pc.now h3{color:#C2362B} .cv-pc.new h3{color:#7FDCEC}
+.cv-pc ul{list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:9px}
+.cv-pc li{display:flex; justify-content:space-between; gap:10px; font-size:14px}
+.cv-pc li b{font-weight:700; font-variant-numeric:tabular-nums}
+.cv-pc.new li{color:#C9D6DF} .cv-pc.new li b{color:#fff}
+.cv-tot{margin-top:auto; padding-top:14px; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:baseline}
+.cv-pc.new .cv-tot{border-top-color:rgba(255,255,255,.18)}
+.cv-tot span{font-size:13px; color:var(--muted)} .cv-pc.new .cv-tot span{color:#C9D6DF}
+.cv-tot b{font:800 30px/1 var(--font-head); font-variant-numeric:tabular-nums}
+.cv-pc.now .cv-tot b{color:#C2362B} .cv-pc.new .cv-tot b{color:#7FDCEC}
+.cv-int{overflow:hidden; border-color:#BFE3EB}
+.cv-int-hero{display:flex; flex-wrap:wrap; gap:8px 28px; align-items:flex-end; justify-content:space-between; padding:14px 20px; background:linear-gradient(135deg,#E8F5F8 0%,#F4FAFC 60%,#fff 100%); border-bottom:1px solid #D2EBF1}
+.cv-int-hero .k{margin:0; font:800 11.5px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:#127C8F}
+.cv-int-hero .n{margin:2px 0 0; font:800 50px/1 var(--font-head); letter-spacing:-.02em; color:#127C8F; font-variant-numeric:tabular-nums}
+.cv-int-hero .t{margin:0 0 4px; max-width:420px; text-align:right; font-size:13px; line-height:1.4; color:var(--ink)}
+.cv-int-hero.plain{background:#fff} .cv-int-hero.plain .n,.cv-int-hero.plain .k{color:var(--navy)}
+.cv-int-bars{padding:14px 20px 16px}
+.cv-int-bars .r{display:grid; grid-template-columns:120px 1fr 110px; gap:12px; align-items:center; margin-bottom:10px; font-size:13px}
+.cv-int-bars .l{font-weight:700} .cv-int-bars .l small{display:block; font-weight:400; color:var(--muted); font-size:11.5px}
+.cv-int-bars .b{height:12px; background:#EEF3F5; border-radius:6px; overflow:hidden} .cv-int-bars .b i{display:block; height:100%; border-radius:6px}
+.cv-int-bars b{text-align:right; font:800 15px var(--font-body); font-variant-numeric:tabular-nums}
+.cv-three{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px}
+.cv-tile{border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:#fff}
+.cv-tile .k{margin:0; font-size:12.5px; font-weight:700; color:var(--muted)}
+.cv-tile .n{margin:2px 0 2px; font:800 26px/1.1 var(--font-head); color:var(--ink); font-variant-numeric:tabular-nums}
+.cv-tile .s{margin:0; font-size:12.5px; color:var(--muted); line-height:1.4}
+.cv-note{margin:12px 0 0; padding:10px 14px; border-radius:10px; background:#F4F8FA; font-size:14px; font-weight:600}
+.cv-disc{margin-top:24px; padding-top:14px; border-top:1px solid var(--line); font-size:11px; line-height:1.5; color:var(--muted)}
+.cv-disc p{margin:0 0 7px} .cv-disc b{color:var(--ink)}
+.cv-disc .h{font:800 12px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:var(--ink); margin-bottom:8px}
+.cv-disc .lic{display:flex; gap:10px; align-items:flex-start; margin-top:10px; padding-top:10px; border-top:1px solid var(--line)}
+.cv-disc .lic svg{width:26px; height:26px; flex:none; color:var(--ink)}
+@media (max-width:640px){ .cv-two{grid-template-columns:1fr} .cv-h{font-size:20px} .cv-bars .r{grid-template-columns:58px 1fr 88px; gap:8px} .cv-int-hero .t{text-align:left} .cv-int-bars .r{grid-template-columns:90px 1fr 90px} }
+
+/* ===================== Dark workspace + sticky verdict (Nov 14, pass 3) =====================
+   Page background goes dark; inputs, the sheet and the LO panel stay light so the work reads clearly.
+   The verdict strip sticks to the top as its own dark navy band. */
+:root, :root:not([data-theme="light"]), :root[data-theme="dark"]{ --bg:#07131F }
+body{background:#07131F; color:var(--ink)}
+header.app{box-shadow:none; border:1px solid rgba(255,255,255,.08)}
+.card, .mx-more, .sheet, .lopanel{box-shadow:0 1px 0 rgba(255,255,255,.03), 0 12px 32px rgba(0,0,0,.35)}
+.forline{color:#C9D6DF}
+body.client .clientbar, body.client .disc{color:#C9D6DF}
+
+.mx-verdict{position:sticky; top:10px; z-index:30; gap:0; padding:6px; border-radius:18px;
+  background:#0E2A47; border:1px solid rgba(127,220,236,.28);
+  box-shadow:0 14px 36px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06)}
+.mx-vt{background:transparent; border:0; border-radius:12px; color:#fff; padding:12px 16px}
+.mx-vt + .mx-vt{box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
+.mx-vt .k{color:#9CC9D6}
+.mx-vt .s{color:#C9D6DF}
+.mx-vt.pass .big{color:#7FDCEC}
+.mx-vt.hero, .mx-vt.hero.neg{background:transparent; border:0; color:#fff}
+.mx-vt.hero .k{color:#9CC9D6} .mx-vt.hero .s{color:#C9D6DF}
+.mx-vt.hero .big{color:#7FDCEC}
+/* needs attention: the only light tiles on the band, so they jump out */
+.mx-vt.fail, .mx-vt.hero.neg{background:#FEF0EB; color:var(--navy); box-shadow:inset 0 0 0 1.5px #F46744 !important; margin:2px}
+.mx-vt.fail .k, .mx-vt.hero.neg .k{color:#9A3F1E}
+.mx-vt.fail .s, .mx-vt.hero.neg .s{color:var(--ink)}
+.mx-vt.fail .big, .mx-vt.hero.neg .big{color:#9A3F1E}
+.mx-vt.rev.warnonly{background:rgba(244,103,68,.12); border:0; box-shadow:inset 4px 0 0 #F9A58F !important; color:#fff; margin:2px}
+.mx-vt.rev.warnonly .k{color:#F9C2B1} .mx-vt.rev.warnonly .s b{color:#fff}
+.mx-vt.rev.fail .s b{color:var(--navy)}
+.mx-vt.rev:focus-visible{outline:3px solid #7FDCEC}
+@media (max-width:760px){ .mx-verdict{position:static} .mx-vt + .mx-vt{box-shadow:inset 0 1px 0 rgba(255,255,255,.12)} }
+.lopanel, #inputs input, #inputs select{scroll-margin-top:140px}
+
+/* ---- checks drawer under the verdict bar ---- */
+.mx-verdict{margin-bottom:8px}
+.mx-checks{margin:0 0 16px; padding:10px; border-radius:16px; background:#0B2238; border:1px solid rgba(127,220,236,.18)}
+body.client .mx-checks{display:none}
+.mx-checks ul{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr)); gap:8px}
+.mx-ck{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; padding:10px 12px; border-radius:10px; font-size:13.5px; line-height:1.4}
+.mx-ck .tx{flex:1 1 240px; min-width:0}
+.mx-ck .tag{flex:none; font:800 10.5px var(--font-head); letter-spacing:.12em; text-transform:uppercase; padding:3px 7px; border-radius:6px}
+.mx-ck.fail{background:#FEF0EB; color:var(--navy); box-shadow:inset 0 0 0 1.5px #F46744}
+.mx-ck.fail .tag{background:#F46744; color:var(--navy)}
+.mx-ck.warn{background:rgba(255,255,255,.06); color:#E4EDF2; box-shadow:inset 4px 0 0 #F9A58F}
+.mx-ck.warn .tag{background:rgba(249,165,143,.2); color:#F9C2B1}
+.mx-ck .go{flex:none; border:0; background:none; padding:0; font:700 13px var(--font-body); color:#9A3F1E; text-decoration:underline; text-decoration-color:#F46744; cursor:pointer}
+.mx-ck .ackbtn{flex:none; width:auto; min-height:36px; padding:6px 12px; border-radius:8px; background:#fff; border:1.5px solid #F46744; color:#9A3F1E; font:700 12.5px var(--font-body)}
+.mx-ck .ackbtn.on{background:#EAF3F6; border-color:#B8CDD6; color:var(--navy)}
+.mx-ck.warn .ackbtn{background:transparent; color:#fff; border-color:#F9A58F}
+
+.lopanel > .mx-deal:first-child{margin-top:0; padding-top:0; border-top:0}
+.mx-deal .missingrow .lblc{background:transparent; box-shadow:none; color:#9A3F1E}
+
+/* ===================== Pass 4: right-sized verdict bar, checks + suggestions drawer, essentials as two cards ===================== */
+.mx-verdict{grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr)); padding:4px}
+.mx-vt{padding:10px 14px; gap:2px; justify-content:center}
+.mx-vt .k{font-size:10.5px}
+.mx-vt .big{font-size:20px} .mx-vt .big svg{width:19px; height:19px}
+.mx-vt.hero .big{font-size:24px}
+.mx-vt .s{font-size:12px; -webkit-line-clamp:2}
+.mx-vt.rev .big{font-size:14px}
+/* drawer: checks left, suggestions right */
+.mx-checks{display:grid; grid-template-columns:minmax(0,1.45fr) minmax(0,1fr); gap:10px 14px; padding:12px 14px; align-items:start}
+.mx-checks:not(:has(.mx-sg)){grid-template-columns:1fr}
+.mx-grp-h{margin:0 0 8px; font:800 10.5px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:#9CC9D6}
+.mx-cklist{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px}
+.mx-checks ul.mx-cklist{display:flex}
+.mx-ck{padding:8px 12px; font-size:13px; line-height:1.4; gap:4px 10px; flex-wrap:nowrap; align-items:flex-start}
+.mx-ck .tag{width:82px; text-align:center; margin-top:1px; font-size:10px; padding:3px 0}
+.mx-ck .tx{flex:1 1 auto}
+.mx-ck .go{margin-top:1px; white-space:nowrap}
+.mx-ck .ackbtn{min-height:30px; padding:4px 10px; font-size:12px; white-space:normal; max-width:240px}
+.mx-ck:has(.ackbtn){flex-wrap:wrap} .mx-ck:has(.ackbtn) .ackbtn{margin-left:92px}
+.mx-ck-none{margin:0; display:flex; gap:8px; align-items:center; color:#7FDCEC; font-weight:700; font-size:13.5px}
+.mx-ck-none svg{width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.6; stroke-linecap:round; stroke-linejoin:round}
+.mx-sg{border-left:1px solid rgba(255,255,255,.1); padding-left:14px; color:#E4EDF2; min-width:0}
+.mx-sgh{margin:0 0 6px; font:700 13px var(--font-body); color:#fff} .mx-sgh span{font-weight:400; color:#9CC9D6; font-size:12px; margin-left:4px}
+.mx-term table{width:100%; border-collapse:collapse; font-size:13px; font-variant-numeric:tabular-nums}
+.mx-term th{text-align:left; font:700 10.5px var(--font-head); letter-spacing:.1em; text-transform:uppercase; color:#9CC9D6; padding:0 8px 4px 0; border-bottom:1px solid rgba(255,255,255,.12)}
+.mx-term td{padding:5px 8px 5px 0; border-bottom:1px solid rgba(255,255,255,.06)}
+.mx-term td:nth-child(2){color:#7FDCEC; font-weight:700}
+.mx-term td span{color:#9CC9D6; font-size:11.5px; margin-left:4px}
+.mx-term th:not(:first-child), .mx-term td:not(:first-child){text-align:right; padding-right:0; padding-left:8px}
+.mx-facts{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:6px; font-size:12.5px; line-height:1.45; color:#C9D6DF}
+.mx-facts li{padding-left:12px; position:relative} .mx-facts li::before{content:''; position:absolute; left:0; top:.6em; width:5px; height:5px; border-radius:50%; background:#1C97AE}
+@media (max-width:900px){ .mx-checks{grid-template-columns:1fr} .mx-sg{border-left:0; padding-left:0; border-top:1px solid rgba(255,255,255,.1); padding-top:10px} .mx-ck:has(.ackbtn) .ackbtn{margin-left:0} }
+/* essentials: section label + two cards */
+.mx-ess{display:flex; flex-direction:column; gap:10px}
+.mx-ess-h{margin:2px 4px 0; font:800 12px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:#9CC9D6}
+.mx-esscard h2{padding:12px 18px 10px}
+.mx-esscard .body{padding:12px 18px 6px}
+.mx-esscard .f{margin-bottom:9px}
+
+.mx-ck{display:grid; grid-template-columns:82px minmax(0,1fr) auto; align-items:start}
+.mx-ck .ackbtn, .mx-ck:has(.ackbtn) .ackbtn{grid-column:2 / -1; justify-self:start; margin:4px 0 0; max-width:none}
+.mx-ck:not(:has(.tag)) .ackbtn{grid-column:1 / -1}
+@media (max-width:560px){ .mx-ck{grid-template-columns:1fr} .mx-ck .tag{justify-self:start; width:auto; padding:3px 7px} .mx-ck .ackbtn{grid-column:1} }
+@media (max-width:560px){
+  .mx-ck:has(.ackbtn) .ackbtn, .mx-ck .ackbtn{grid-column:1 / -1}
+  .mx-ck .go{justify-self:start}
+  .mx-verdict .mx-vt:nth-child(4){grid-column:1/-1}
+}
+
+/* ---- max loan calc pop-out ---- */
+.mx-modal{position:fixed; inset:0; z-index:100; background:rgba(4,12,22,.72); backdrop-filter:blur(3px); display:flex; align-items:center; justify-content:center; padding:20px}
+.mx-modal[hidden]{display:none !important}
+body.mx-modal-open{overflow:hidden}
+.mx-dlg{width:min(760px,100%); max-height:calc(100vh - 40px); overflow:auto; background:#fff; border-radius:20px; box-shadow:0 30px 80px rgba(0,0,0,.5); color:var(--ink)}
+.mx-dlg-h{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; padding:22px 26px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; background:#fff; border-radius:20px 20px 0 0}
+.mx-dlg-h .k{margin:0; font:800 11px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.mx-dlg-h h2{margin:2px 0 0; font:800 26px/1.15 var(--font-head); color:var(--navy)}
+.mx-dlg-h .s{margin:4px 0 0; font-size:14px; color:var(--muted)}
+.mx-x{flex:none; width:44px; height:44px; border-radius:12px; border:1px solid var(--line); background:#fff; color:var(--navy); font-size:16px; cursor:pointer}
+.mx-x:hover{background:#F4F8FA}
+.mx-steps{list-style:none; margin:0; padding:8px 26px 4px; counter-reset:st}
+.mx-steps li{counter-increment:st; display:grid; grid-template-columns:32px minmax(0,1fr) auto; gap:4px 14px; align-items:start; padding:14px 0; border-bottom:1px solid #EEF3F5}
+.mx-steps li::before{content:counter(st); width:26px; height:26px; border-radius:50%; background:#EAF3F6; color:var(--navy); font:800 12.5px/26px var(--font-head); text-align:center}
+.mx-steps li b{display:block; font:700 16px var(--font-body); color:var(--navy)}
+.mx-steps li span{display:block; margin-top:3px; font-size:13.5px; line-height:1.45; color:var(--muted)}
+.mx-steps li em{font-style:normal; font:800 19px var(--font-head); color:var(--navy); font-variant-numeric:tabular-nums; text-align:right; white-space:nowrap}
+.mx-steps li em.good{color:#127C8F}
+.mx-steps li.res{background:#EEF8FA; border-radius:12px; border-bottom:0; margin:6px -12px; padding:14px 12px}
+.mx-steps li.res::before{background:#1C97AE; color:#fff}
+.mx-steps li.res em{font-size:22px; color:#127C8F}
+.mx-steps li.bad{background:#FEF0EB; border-radius:12px; margin:6px -12px; padding:14px 12px; box-shadow:inset 0 0 0 1.5px #F46744}
+.mx-steps li.bad em{color:#9A3F1E}
+.mx-dlg-f{display:flex; justify-content:flex-end; padding:14px 26px 22px}
+.mx-done{min-height:44px; padding:0 22px; border:0; border-radius:12px; background:var(--navy); color:#fff; font:700 14px var(--font-body); cursor:pointer}
+@media (max-width:560px){ .mx-dlg-h{padding:18px} .mx-steps{padding:6px 18px} .mx-steps li{grid-template-columns:28px 1fr} .mx-steps li em{grid-column:2; text-align:left} }
+
+/* ===================== Pass 5: sheet as three cards (LO view) ===================== */
+body:not(.client) .sheet{background:transparent; border:0; box-shadow:none; padding:0; display:flex; flex-direction:column; gap:16px}
+body:not(.client) .sheet > .shead, body:not(.client) .sheet > .forline{display:none}
+body.client .sheet > .mx-scard{display:none !important}
+.mx-scard{background:#fff; border-radius:18px; padding:20px 22px 14px; box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.mx-sh{margin:0 0 12px}
+.mx-sh .k{margin:0 0 3px; font:800 11.5px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.mx-sh .h{margin:0; font:800 24px/1.15 var(--font-head); color:var(--navy); letter-spacing:-.01em}
+.mx-sh .g{color:#127C8F} .mx-sh .b{color:#9A3F1E} .mx-sh .n{color:var(--navy)}
+/* table rows: plain lines, numbers right-aligned */
+.mx-scard .srow{margin:0; gap:0 12px; align-items:center}
+.mx-scard .srow:not(.mx-th):not(.mx-tot){padding:9px 0; border-bottom:1px solid #E6EDF0}
+.mx-scard .srow:last-child{border-bottom:0}
+.mx-th{padding:0 0 8px !important; border-bottom:1.5px solid var(--navy) !important}
+.mx-th span{font:800 11px var(--font-head); letter-spacing:.12em; text-transform:uppercase; color:var(--muted); text-align:right}
+.mx-th span:last-child{color:#127C8F}
+.mx-scard .lblc{background:transparent !important; padding:0; border-radius:0; font:600 14.5px var(--font-body); color:var(--navy); box-shadow:none}
+.mx-scard .lblc .sub{color:#6B7A88}
+.mx-scard .vbox{border:0; background:transparent; min-height:0; padding:0; align-items:flex-end; text-align:right; font:600 15px var(--font-body)}
+.mx-scard .vbox.blank{visibility:hidden}
+.mx-scard .vbox .mx-vs{color:#6B7A88}
+.mx-scard .vbox.save, .mx-scard .dcell.save{color:#127C8F; background:transparent; font-weight:800}
+.mx-scard .vbox.bad, .mx-scard .dcell.bad{color:#9A3F1E; background:transparent; font-weight:800}
+.mx-scard .dcell{justify-content:flex-end; gap:6px}
+.mx-scard .dcell.mx-trade{color:#6B7A88; font-weight:600}
+.mx-scard .missingrow .lblc{color:#9A3F1E}
+.mx-scard .missingrow .lblc .sub{color:#9A3F1E}
+/* total payment: the one boxed row */
+.mx-scard .srow.mx-tot{margin-top:10px; padding:12px 14px 12px 0; border:1.5px solid #B8CDD6; border-radius:12px}
+.mx-scard .srow.mx-tot .lblc{font-weight:800; font-size:15.5px}
+.mx-scard .srow.mx-tot .vbox{font-size:20px; font-weight:800; border:0}
+.mx-scard .srow.mx-tot .vbox.save, .mx-scard .srow.mx-tot .dcell.save{background:transparent}
+.mx-scard .srow.mx-tot.missingrow{border-color:#F46744}
+.mx-yr{display:flex; align-items:center; justify-content:flex-end; gap:4px; font:600 12.5px var(--font-body); color:#127C8F; margin-top:2px}
+.mx-yr.off{opacity:.45; text-decoration:line-through}
+.mx-yr .eye{width:auto; padding:0; border:0; background:none; cursor:pointer; color:inherit}
+.srow.mx-folded{display:none !important}
+/* eye icons only on the row you point at (and on rows already hidden) */
+body:not(.client) .mx-scard .eye{opacity:0; transition:opacity .12s}
+body:not(.client) .mx-scard .srow:hover .eye, body:not(.client) .mx-scard .srow:focus-within .eye,
+body:not(.client) .mx-scard .srow.off > .eye, body:not(.client) .mx-scard .dcell.doff .eye, body:not(.client) .mx-scard .mx-yr.off .eye{opacity:1}
+body:not(.client) .mx-scard .srow:hover:not(.mx-th):not(.mx-tot){background:#F7FAFB}
+/* at closing: tiles */
+.mx-tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,190px),1fr)); gap:12px}
+.mx-tiles > .srow{position:relative; display:flex !important; flex-direction:column; align-items:flex-start; gap:2px; padding:14px 16px !important; border:1px solid var(--line) !important; border-radius:12px; background:#fff}
+.mx-tiles > .srow > .vbox.blank{display:none}
+.mx-tiles > .srow > .eye{position:absolute; top:10px; right:10px}
+.mx-tiles .lblc{font:700 12.5px var(--font-body) !important; color:var(--muted) !important}
+.mx-tiles .vbox{align-items:flex-start; text-align:left; font:800 26px/1.15 var(--font-head) !important; color:var(--navy)}
+.mx-tiles .vbox.save{color:var(--navy) !important}
+.mx-tiles .srow:has(.vbox.bad){background:#FEF0EB; border-color:#F46744 !important; box-shadow:inset 0 0 0 .5px #F46744}
+.mx-tiles .srow:has(.vbox.bad) .lblc{color:#9A3F1E !important}
+.mx-tiles .vbox.bad{color:var(--navy) !important}
+.mx-tnote{display:block; font-size:12.5px; color:#6B7A88; line-height:1.4}
+.mx-c-close > .srow{border:0 !important; padding:0 !important; margin-top:12px; grid-template-columns:28px 1fr !important}
+.mx-c-close .cnote{grid-column:2 / -1 !important; background:#F4F8FA; border:0; border-radius:10px; padding:10px 14px}
+.mx-hidden-line{margin:0 4px; color:#9CC9D6} .mx-hidden-line button{color:#7FDCEC}
+.mx-scard .srow.mx-tot .dcell{flex-wrap:wrap; justify-content:flex-end; align-content:center; row-gap:0}
+.mx-scard .srow.mx-tot .dcell > span:not(.mx-yr){white-space:nowrap}
+.mx-yr{flex-basis:100%}
+.cv-bars i.keep span{padding:0 4px}
+@media (max-width:640px){
+  .mx-scard{padding:16px 14px 10px}
+  .mx-scard .srow{grid-template-columns:0 minmax(84px,1.1fr) repeat(3,minmax(0,1fr)) !important; column-gap:8px !important}
+  .mx-scard .srow > .eye{display:none}
+  .mx-scard .lblc{font-size:13px}
+  .mx-scard .vbox{font-size:13.5px}
+  .mx-scard .srow.mx-tot{padding:10px 10px 10px 0}
+  .mx-scard .srow.mx-tot .vbox{font-size:15px}
+  .mx-scard .srow.mx-tot .dcell > span:not(.mx-yr){white-space:normal; text-align:right}
+  .mx-th span{font-size:10px; letter-spacing:.06em}
+  .mx-sh .h{font-size:20px}
+}
+@media (max-width:640px){ .mx-scard .srow > .eye{display:flex; visibility:hidden; width:0; min-width:0; padding:0; overflow:hidden} }
+
+/* ---- the LO/Client switch lives on the right end of the sticky bar ---- */
+.mx-bar{position:sticky; top:10px; z-index:30; display:flex; align-items:stretch; gap:6px; margin:0 0 8px; padding:4px; border-radius:18px;
+  background:#0E2A47; border:1px solid rgba(127,220,236,.28); box-shadow:0 14px 36px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06)}
+.mx-bar > .mx-verdict{position:static; flex:1 1 auto; min-width:0; margin:0; padding:0; background:transparent; border:0; border-radius:0; box-shadow:none}
+.mx-modeslot{flex:none; display:flex; align-items:center; padding:0 10px 0 12px; box-shadow:inset 1px 0 0 rgba(255,255,255,.12)}
+body.client .mx-bar{background:transparent; border:0; box-shadow:none; padding:0; justify-content:flex-end}
+body.client .mx-modeslot{box-shadow:none; padding:0; background:#0E2A47; border:1px solid rgba(127,220,236,.28); border-radius:14px; padding:6px}
+header.app{justify-content:flex-start}
+@media (max-width:760px){ .mx-bar{position:static; flex-direction:column} .mx-modeslot{box-shadow:inset 0 1px 0 rgba(255,255,255,.12); padding:10px; justify-content:flex-end} .mx-bar > .mx-verdict{position:static} }
+
+/* ---- embedded in a web page: the host scrolls, so the bar is pinned by script and the pop-out sits in the visible area ---- */
+html.mx-embed body{padding-bottom:24px}
+html.mx-embed .mx-bar{position:relative; top:auto; will-change:transform}
+html.mx-embed .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
+html.mx-embed .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
+html.mx-embed body.mx-modal-open{overflow:visible}

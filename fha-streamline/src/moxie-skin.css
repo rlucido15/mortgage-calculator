@@ -1,0 +1,94 @@
+/* ===== Moxie brand skin — visual only. Loaded last; changes color, type and shape, never math or behavior. =====
+   Tokens: Barlow, navy #0E2A47, blue #1C97AE, deep teal #127C8F, orange #F46744, teal→navy gradient. No green. */
+:root, :root:not([data-theme="light"]), :root[data-theme="dark"]{
+  --bg:#F4F8FA; --sheet:#ffffff; --ink:#0E2A47; --muted:#4A5868;
+  --cell:#EAF3F6; --cell-ink:#0E2A47; --box:#ffffff; --box-line:#B8CDD6;
+  --moxie:#1C97AE; --moxie-deep:#127C8F; --save:#127C8F; --orange:#F46744; --navy:#0E2A47;
+  --line:#DCE6EB; --bad:#C2362B; --warn-soft:#FDF3E2; --warn:#8A5A0B;
+  --ok-soft:#E8F5F8; --ok:#127C8F; --bad-soft:#FCEBE8; --blue-tint:#EEF8FA; --orange-tint:#FEF0EB;
+  --font-head:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:light;
+}
+body{font-size:14.5px; -webkit-font-smoothing:antialiased; padding-block:16px 56px}
+
+/* ---- header: brand gradient band ---- */
+header.app{background:linear-gradient(315deg,#1C97AE 0%,#0D4E66 42%,#0E2A47 100%); color:#fff; border-radius:20px;
+  padding:18px 22px; margin-bottom:16px; gap:14px 18px; box-shadow:0 10px 30px rgba(14,42,71,.14)}
+.brand{display:flex; align-items:center; gap:16px; min-width:0}
+.brand .mx-wm{height:30px; width:auto; display:block}
+.brand .mx-sep{width:1px; align-self:stretch; background:rgba(255,255,255,.28)}
+.brand .mx-eb{margin:0 0 1px; font:700 11px var(--font-head); letter-spacing:.14em; text-transform:uppercase; color:#7FDCEC}
+.brand h1{font:800 23px/1.1 var(--font-head); letter-spacing:-.01em; color:#fff; margin:0}
+.mode{border:1.5px solid rgba(255,255,255,.7); border-radius:12px; background:rgba(255,255,255,.06)}
+.mode button{color:#fff; font:700 13.5px var(--font-body); padding:8px 15px}
+.mode button.on{background:#fff; color:var(--navy)}
+.mode button:focus-visible{outline:3px solid #7FDCEC; outline-offset:2px}
+
+/* ---- input rail ---- */
+.grid{gap:20px}
+.card{border-radius:16px; border-color:var(--line); box-shadow:0 1px 2px rgba(14,42,71,.04)}
+.card h2{font:800 13px var(--font-head); letter-spacing:.12em; color:var(--navy); padding:14px 18px 12px}
+.card .body{padding:14px 18px}
+fieldset legend{font:700 11.5px var(--font-head); letter-spacing:.12em; color:var(--moxie-deep)}
+.f label{font-size:13.5px; color:var(--ink)}
+.f .hint{font-size:11.5px}
+input,select{font:500 14px var(--font-body); color:var(--ink); background:#fff; border:1px solid #C9D8DF; border-radius:8px; padding:6px 9px}
+input:hover,select:hover{border-color:#9FBAC5}
+input:focus,select:focus{outline:2px solid var(--moxie); outline-offset:0; border-color:var(--moxie)}
+input[type=checkbox]{accent-color:var(--moxie-deep)}
+details summary{color:var(--moxie-deep) !important; letter-spacing:.1em !important}
+.addbtn{border-radius:10px; font:700 12.5px var(--font-body); border-color:var(--moxie); color:var(--moxie-deep)}
+.addbtn:hover{background:#EAF3F6}
+
+/* ---- the sheet ---- */
+.sheet{border:1px solid var(--line); border-radius:20px; padding:20px 20px 24px; box-shadow:0 10px 30px rgba(14,42,71,.07)}
+.shead{margin-bottom:14px}
+.shead .logo{gap:5px; padding:4px 2px}
+.logo .mx-wm-n{width:100%; max-width:150px; height:auto; display:block}
+.logo .m3{font:600 7px var(--font-body); letter-spacing:.16em; color:var(--muted); margin:0}
+.colhead{background:var(--navy); color:#fff; font:700 14.5px var(--font-head); border-radius:10px; min-height:56px; padding:6px 8px; text-align:center; line-height:1.15}
+.shead .colhead:last-child{background:var(--moxie-deep)}
+.lblc{font:600 13px var(--font-body); border-radius:8px; padding:7px 12px; line-height:1.25}
+.lblc .sub{font-size:11px}
+.vbox{border-radius:8px; border-color:var(--box-line); font:600 14.5px var(--font-body); color:var(--ink)}
+.vbox.save{color:#127C8F; font-weight:800; background:#F6FBFC; border-color:#9BD3DF}
+.vbox.bad{color:var(--navy); background:var(--orange-tint); border-color:#F7A68F; font-weight:800}
+.vbox.blank{background:transparent; border-color:transparent}
+.vbox .mini{font-size:11px}
+.dcell.save{color:#127C8F}
+.secttl{display:flex; align-items:center; gap:8px; font:800 11.5px var(--font-head); letter-spacing:.14em; color:var(--moxie-deep); padding:10px 2px 3px}
+.secttl::before{content:''; width:18px; height:3px; border-radius:2px; background:var(--orange); flex:none}
+.eye:hover{color:var(--moxie-deep)}
+.missingrow .lblc{background:var(--bad)}
+.cnote{border-radius:10px; font:600 13.5px var(--font-body); background:#F2F9FB}
+.forline{font:600 14px var(--font-body)}
+.clientbar{font-size:12.5px}
+.disc{font-size:11px; line-height:1.5}
+.togglebtn{border-radius:8px; font:700 12.5px var(--font-body)}
+
+/* ---- LO panel, checks & suggestions ---- */
+.lopanel{border-radius:16px; border-color:var(--line); padding:14px 16px; box-shadow:0 1px 2px rgba(14,42,71,.04)}
+.lopanel .lp-h{font:800 12px var(--font-head); letter-spacing:.14em; color:var(--navy)}
+.pill{font:600 12px var(--font-body)}
+.lopanel .pill{border-radius:10px}
+.pill.ok{background:#E8F5F8; color:#127C8F}
+.pill.no{background:var(--orange-tint); color:var(--navy); box-shadow:inset 3px 0 0 #F46744}
+.pill.warn{background:#FFF6F2; color:var(--navy); box-shadow:inset 3px 0 0 #F9A58F}
+.sugg{border-radius:12px; border-color:var(--moxie)}
+.sugg .sugg-h{font:800 11.5px var(--font-head); letter-spacing:.12em}
+.sugg li{font-size:13px}
+.note{font-size:11.5px; line-height:1.45}
+
+@media (max-width:640px){
+  header.app{padding:16px; border-radius:16px}
+  .brand .mx-wm{height:24px}
+  .brand h1{font-size:20px}
+}
+@media print{
+  *{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important}
+  .sheet,.card,.lopanel,header.app{box-shadow:none !important}
+}
+/* labels: name on one line, the small note underneath (keeps long labels from stacking word by word) */
+.lblc{flex-wrap:wrap; align-content:center; column-gap:6px}
+.lblc .sub{flex-basis:100%; margin-left:0; margin-top:1px; line-height:1.3}

@@ -1,0 +1,943 @@
+<title>FHA Streamline Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: Moxie-style comparison sheet — gray label rail, boxed Current/New value columns, green savings. Input rail left (LO only). */
+:root{
+  --bg:#f3f5f6; --sheet:#ffffff; --ink:#111417; --muted:#6b7a82;
+  --cell:#d9dde0; --cell-ink:#111417; --box:#ffffff; --box-line:#1c2327;
+  --moxie:#19b8cc; --moxie-deep:#0e8c9c; --save:#1fa05a;
+  --line:#dfe5e8; --bad:#c0392b; --warn-soft:#faf2dd; --warn:#8a6210;
+  --ok-soft:#e4f4ec; --ok:#157a4a; --bad-soft:#fbeae8;
+  --font-head:'Barlow Semi Condensed',system-ui,sans-serif;
+  --font-body:'Public Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0f1719; --sheet:#151f23; --ink:#e8f1f3; --muted:#8aa0a8;
+  --cell:#223034; --cell-ink:#dcebee; --box:#0f1719; --box-line:#49626b;
+  --moxie:#2fd0e4; --moxie-deep:#8fe6f0; --save:#43cf85;
+  --line:#243338; --bad:#f08a7d; --warn-soft:#332a12; --warn:#e3b65a;
+  --ok-soft:#123327; --ok:#4cc98a; --bad-soft:#3a1b17;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#0f1719; --sheet:#151f23; --ink:#e8f1f3; --muted:#8aa0a8;
+  --cell:#223034; --cell-ink:#dcebee; --box:#0f1719; --box-line:#49626b;
+  --moxie:#2fd0e4; --moxie-deep:#8fe6f0; --save:#43cf85;
+  --line:#243338; --bad:#f08a7d; --warn-soft:#332a12; --warn:#e3b65a;
+  --ok-soft:#123327; --ok:#4cc98a; --bad-soft:#3a1b17;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg); color:var(--ink); font-family:var(--font-body); font-size:14px; margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px)); padding-right:max(16px,env(safe-area-inset-right,0px)); padding-block:0 56px;}
+.wrap{max-width:1560px; margin:0 auto}
+header.app{display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; padding-block:16px 8px}
+.brand h1{font-family:var(--font-head); font-weight:700; font-size:24px; margin:0}
+.brand h1 b{color:var(--moxie)}
+.mode{display:flex; border:1.5px solid var(--moxie); border-radius:999px; overflow:hidden}
+.mode button{border:0; background:transparent; color:var(--moxie-deep); font:600 13px var(--font-body); padding:8px 16px; cursor:pointer}
+.mode button.on{background:var(--moxie); color:#fff}
+nav.tabs{display:flex; gap:8px; flex-wrap:wrap; margin-block:6px 16px}
+nav.tabs button{font:600 13px var(--font-head); letter-spacing:.4px; text-transform:uppercase; border:1px solid var(--line);
+  background:var(--sheet); color:var(--muted); padding:9px 14px; border-radius:8px; cursor:pointer}
+nav.tabs button.on{background:var(--moxie); color:#fff; border-color:var(--moxie)}
+.grid{display:grid; grid-template-columns:minmax(290px,350px) 1fr; gap:18px; align-items:start}
+@media(max-width:880px){ .grid{grid-template-columns:1fr} }
+.card{background:var(--sheet); border:1px solid var(--line); border-radius:10px}
+.card h2{font:700 12.5px var(--font-head); letter-spacing:.8px; text-transform:uppercase; color:var(--muted); margin:0; padding:12px 16px 10px; border-bottom:1px solid var(--line)}
+.card .body{padding:12px 16px}
+fieldset{border:0; margin:0 0 12px; padding:0}
+fieldset legend{font:700 11.5px var(--font-head); letter-spacing:.7px; text-transform:uppercase; color:var(--moxie-deep); margin-bottom:7px; padding:0}
+.f{display:grid; grid-template-columns:1fr 122px; gap:5px 10px; align-items:center; margin-bottom:7px}
+.f label{font-size:12.5px}
+.f .hint{grid-column:1/-1; color:var(--muted); font-size:11px; margin-top:-3px}
+input,select{font:500 13px var(--font-body); color:var(--ink); background:var(--bg); border:1px solid var(--line);
+  border-radius:6px; padding:6px 8px; width:100%; font-variant-numeric:tabular-nums}
+input:focus,select:focus{outline:2px solid var(--moxie); outline-offset:1px}
+input[type=checkbox]{width:17px; height:17px; justify-self:end; accent-color:var(--moxie)}
+
+/* ======= the sheet ======= */
+.sheet{background:var(--sheet); border:1.5px solid var(--box-line); border-radius:6px; padding:18px 18px 22px; max-width:920px; min-width:0; overflow:hidden}
+.srow>*{min-width:0}
+body.client .sheet{margin:0 auto}
+.srow{display:grid; grid-template-columns:26px minmax(130px,170px) 1fr 1fr minmax(96px,0.9fr); gap:6px 8px; align-items:stretch; margin-bottom:6px}
+body.client .srow{grid-template-columns:minmax(130px,170px) 1fr 1fr minmax(96px,0.9fr)}
+@media(max-width:560px){ .srow{grid-template-columns:22px 92px 1fr 1fr 86px} body.client .srow{grid-template-columns:88px 1fr 1fr 86px} }
+.dcell{display:flex; gap:5px; align-items:center; justify-content:center; font-size:12.5px; padding:7px 6px}
+.dcell span{overflow-wrap:anywhere}
+.dcell .eye{flex:none}
+.dcell.doff{opacity:.38}
+body.client .dcell.doff{visibility:hidden}
+body.client .srow>span:first-child{display:none}
+body.client .cnote{grid-column:1/-1 !important}
+body.client .rgrid{grid-template-columns:1fr; justify-items:center}
+body.client .lblc .sub{display:none}
+body.client .lblc .sub.subc{display:inline}
+body.client .losub{display:none}
+.morerow{display:none !important}
+body.showmore:not(.client) .morerow{display:grid !important}
+.showmore-row{padding:6px 0 0; display:flex; justify-content:center}
+.shead{margin-bottom:12px}
+.shead .logo{display:flex; flex-direction:column; justify-content:center; padding:4px 2px}
+.logo .mm{font:800 30px/0.9 var(--font-head); color:var(--moxie); letter-spacing:1px}
+.logo .m1{font:800 19px/1.1 var(--font-head); color:var(--moxie); letter-spacing:2.5px}
+.logo .m2{font:600 9px var(--font-body); color:var(--moxie); letter-spacing:3.6px}
+.logo .m3{font:500 6.6px var(--font-body); color:var(--muted); letter-spacing:1.4px; margin-top:2px}
+.colhead{background:var(--cell); color:var(--cell-ink); font:700 13.5px var(--font-body); display:flex; align-items:center; justify-content:center; border-radius:3px; min-height:56px}
+.lblc{background:var(--cell); color:var(--cell-ink); font:700 12.5px var(--font-body); display:flex; align-items:center; padding:7px 12px; border-radius:3px}
+.lblc .sub{font-weight:500; color:var(--muted); font-size:10.5px; margin-left:6px}
+.vbox{background:var(--box); border:1px solid var(--box-line); border-radius:3px; display:flex; align-items:center; justify-content:center;
+  font:600 13.5px var(--font-body); font-variant-numeric:tabular-nums; padding:7px 10px; min-height:33px; text-align:center}
+.vbox.dash{border-style:dashed}
+.vbox.save{color:var(--save); font-weight:700}
+.vbox.bad{color:var(--bad)}
+.vbox.blank{border-color:transparent; background:transparent}
+.vbox .mini{font-weight:500; font-size:10.5px; color:var(--muted); margin-left:6px}
+.gap{height:12px}
+.srow.off{opacity:.38}
+body.client .srow.off{display:none}
+body.client .lo-only{display:none !important}
+.eye{border:0; background:transparent; cursor:pointer; color:var(--muted); padding:0; line-height:0; border-radius:5px; align-self:center; justify-self:center}
+.eye:hover{color:var(--moxie-deep)}
+.eye svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8}
+.srow.off .eye{color:var(--bad)}
+body.client .eye{display:none}
+.secttl{grid-column:2/-1; font:700 11px var(--font-head); letter-spacing:1px; text-transform:uppercase; color:var(--muted); padding:8px 2px 2px}
+body.client .secttl{grid-column:1/-1}
+.rgrid{display:grid; grid-template-columns:minmax(0,920px) minmax(230px,290px); gap:16px; align-items:start}
+@media(max-width:1060px){ .rgrid{grid-template-columns:1fr} .lopanel{position:static} }
+.lopanel{position:sticky; top:12px; background:var(--sheet); border:1px solid var(--line); border-radius:10px; padding:12px 14px; max-height:calc(100vh - 24px); overflow-y:auto}
+.lopanel .lp-h{font:700 11px var(--font-head); letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+.lopanel .pills{flex-direction:column; align-items:stretch; padding:0 0 4px}
+.lopanel .pill{border-radius:8px; padding:7px 10px; white-space:normal; line-height:1.35}
+.lopanel .sugg{margin-top:10px; padding:8px 11px}
+.pills{display:flex; flex-wrap:wrap; gap:7px; padding:12px 0 2px}
+.pill{font:600 11.5px var(--font-body); border-radius:999px; padding:5px 11px 5px 9px; display:inline-flex; gap:6px; align-items:center}
+.pill.ok{background:var(--ok-soft); color:var(--ok)} .pill.no{background:var(--bad-soft); color:var(--bad)} .pill.warn{background:var(--warn-soft); color:var(--warn)}
+.note{color:var(--muted); font-size:11px; padding-top:8px}
+.debts table{width:100%; border-collapse:collapse; font-variant-numeric:tabular-nums}
+.debts th{font:700 10.5px var(--font-head); letter-spacing:.6px; text-transform:uppercase; color:var(--muted); text-align:left; padding:3px 5px}
+.debts td{padding:2px 2px}
+.debts td input{padding:5px 7px}
+.debts td.n input{text-align:right}
+.debts .del{border:0; background:transparent; color:var(--bad); font-size:16px; cursor:pointer; padding:2px 6px}
+.addbtn{margin-top:7px; border:1.5px dashed var(--moxie); color:var(--moxie-deep); background:transparent; border-radius:7px; padding:6px 11px; font:600 12px var(--font-body); cursor:pointer}
+.clientbar{display:none; color:var(--muted); font-size:11.5px; max-width:760px; margin:0 auto 12px}
+body.client .clientbar{display:block}
+body.client .inputs-col{display:none}
+body.client .grid{grid-template-columns:1fr}
+body.client nav.tabs{display:none}
+.disc{display:none; color:var(--muted); font-size:10.5px; max-width:760px; margin:14px auto 0}
+body.client .disc{display:block}
+.forline{font:600 13px var(--font-body); color:var(--ink); padding:2px 2px 10px}
+.forline .sub2{color:var(--muted); font-weight:500}
+.sugg{margin-top:14px; border:1.5px dashed var(--moxie); border-radius:8px; padding:10px 14px}
+.sugg .sugg-h{font:700 11px var(--font-head); letter-spacing:1px; text-transform:uppercase; color:var(--moxie-deep); margin-bottom:6px}
+.sugg ul{margin:0; padding-left:18px}
+.sugg li{font-size:12.5px; margin-bottom:5px}
+.sugg li b{color:var(--moxie-deep)}
+.togglebtn{cursor:pointer; border:1.5px solid var(--moxie); background:transparent; color:var(--moxie-deep); font:600 12.5px var(--font-body)}
+.togglebtn.on{background:var(--moxie); color:#fff}
+.ackbtn{border-color:var(--bad); color:var(--bad)}
+.ackbtn.on{background:var(--bad); color:#fff; border-color:var(--bad)}
+.missingrow .lblc{background:var(--bad); color:#fff; font-weight:800}
+.missingrow .lblc .sub{color:#ffd9d4}
+.missingrow .vbox{border-color:var(--bad); border-width:2px; color:var(--bad); font-weight:800}
+.cnote{border:1.5px solid var(--moxie); background:var(--sheet); color:var(--moxie-deep); border-radius:6px; padding:9px 12px; font:600 13px var(--font-body)}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Public+Sans:wght@400;500;600;700&display=swap">
+
+<div class="wrap">
+<header class="app">
+  <div class="brand"><h1>Moxie FHA <b>Streamline</b></h1></div>
+  <div class="mode" role="group" aria-label="View mode">
+    <button id="loBtn" class="on" type="button">LO View</button>
+    <button id="clBtn" type="button">Client View</button>
+  </div>
+</header>
+
+
+<div class="grid">
+  <div class="inputs-col" id="inputs"></div>
+  <div>
+    <div class="clientbar">Refinance comparison prepared by your Moxie Mortgage loan officer.</div>
+    <div id="results"></div>
+    <div class="disc">Estimates for discussion only — not a Loan Estimate, rate lock, or commitment to lend. Final figures subject to underwriting, payoff demand and final pricing. Moxie Mortgage, a division of NEXA Mortgage.</div>
+  </div>
+</div>
+</div>
+
+<script>
+'use strict';
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const CUSHION=2; /* fixed per policy */
+const fmt$=v=>isFinite(v)?(v<0?'−$':'$')+Math.abs(v).toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+const fmt$2=v=>fmt$(v); /* whole dollars everywhere per Drew */
+const fmtPct=v=>isFinite(v)?v.toFixed(3).replace(/0+$/,'').replace(/\.$/,'')+'%':'—';
+function pmt(P,rate,n){ if(!(P>0)||!(n>0)) return 0; const r=rate/1200; if(r===0) return P/n; return P*r/(1-Math.pow(1+r,-n)); }
+function balAfter(P,rate,n,k){ if(!(P>0)) return 0; const r=rate/1200; k=Math.max(0,Math.min(k,n)); if(r===0) return P*(1-k/n);
+  const m=pmt(P,rate,n); return P*Math.pow(1+r,k)-m*(Math.pow(1+r,k)-1)/r; }
+function totInterest(P,rate,n){ return pmt(P,rate,n)*n-P; }
+function monthsBetween(a,b){ return (b.getFullYear()-a.getFullYear())*12+(b.getMonth()-a.getMonth())+(b.getDate()>=a.getDate()?0:-1); }
+function addMonths(d,m){ const x=new Date(d); x.setMonth(x.getMonth()+m); return x; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function parseDate(v){ if(!v) return null; const d=new Date(v+'T12:00:00'); return isNaN(d)?null:d; }
+function iso(d){ return d.toISOString().slice(0,10); }
+function fmtDate(d){ return d?d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—'; }
+const TODAY=new Date(); TODAY.setHours(12,0,0,0);
+/* federal holidays (actual dates) for rescission/funding math */
+function fedHolidays(y){
+  const d=(m,day)=>new Date(y,m,day,12);
+  const nth=(m,dow,n)=>{const x=new Date(y,m,1,12);let c=0;for(;;){if(x.getDay()===dow){c++;if(c===n)return new Date(x);}x.setDate(x.getDate()+1);}};
+  const last=(m,dow)=>{const x=new Date(y,m+1,0,12);while(x.getDay()!==dow)x.setDate(x.getDate()-1);return new Date(x);};
+  return [d(0,1),nth(0,1,3),nth(1,1,3),last(4,1),d(5,19),d(6,4),nth(8,1,1),nth(9,1,2),d(10,11),nth(10,4,4),d(11,25)];
+}
+function isHoliday(dt){ return fedHolidays(dt.getFullYear()).some(h=>h.getMonth()===dt.getMonth()&&h.getDate()===dt.getDate()); }
+/* Reg Z rescission: 3 business days after signing (Mon–Sat count; Sundays & federal holidays don't).
+   Disbursement: next banking day (Mon–Fri, no holidays) after rescission expires. */
+function fundingDate(close){
+  let d=new Date(close), count=0;
+  while(count<3){ d=addDays(d,1); if(d.getDay()!==0&&!isHoliday(d)) count++; }
+  let f=addDays(d,1);
+  while(f.getDay()===0||f.getDay()===6||isHoliday(f)) f=addDays(f,1);
+  return f;
+}
+function firstOfNextMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 1, 12); }
+function firstPaymentFromClose(close){ return new Date(close.getFullYear(), close.getMonth()+2, 1, 12); }
+function paymentsMadeBy(firstPay, asOf){ if(asOf<firstPay) return 0; return monthsBetween(firstPay, asOf)+1; }
+/* lender-worksheet method: calendar months, open month -> FUNDING month (DATEDIF style), days ignored */
+function ufmipRefundMonths(priorClose, fund){ return Math.max(1,(fund.getFullYear()-priorClose.getFullYear())*12+(fund.getMonth()-priorClose.getMonth())); }
+function ufmipRefundPct(priorClose, fund){ const m=ufmipRefundMonths(priorClose,fund); if(m>36) return 0; return Math.max(10, 80-2*(m-1)); }
+function escrowDeposit(items, firstPay){
+  const monthly=items.reduce((s,i)=>s+i.annual/12,0); if(monthly<=0) return {deposit:0,monthly:0};
+  let bal=0, minBal=0;
+  for(let m=0;m<12;m++){ bal+=monthly;
+    const mon=(firstPay.getMonth()+m)%12;
+    items.forEach(i=>{ (i.dueMonths||[]).forEach(dm=>{ if(dm===mon) bal-=i.annual/(i.dueMonths.length); }); });
+    minBal=Math.min(minBal,bal); }
+  return {deposit:Math.max(0, CUSHION*monthly-minBal), monthly};
+}
+/* historical FHA annual MIP rate by case/closing era, term, orig LTV, loan size (30yr & 15yr tiers, simplified) */
+function histMIPRate(close, base, ltv, termMonths){
+  const d=iso(close), t15=termMonths<=180;
+  const hbLimit=d>='2023-03-20'?726200:625500, hb=base>hbLimit;
+  if(d>='2023-03-20'){ if(t15) return ltv<=90?(hb?0.40:0.15):(hb?0.65:0.40);
+    return ltv<=95?(hb?0.70:0.50):(hb?0.75:0.55); }
+  if(d>='2015-01-26'){ if(t15) return ltv<=90?(hb?0.70:0.45):(hb?0.95:0.70);
+    return ltv<=95?(hb?1.00:0.80):(hb?1.05:0.85); }
+  if(d>='2013-04-01'){ if(t15) return ltv<=90?0.45:0.70;
+    return ltv<=95?(hb?1.50:1.30):(hb?1.55:1.35); }
+  if(d>='2012-04-01') return ltv<=95?1.20:1.25;
+  if(d>='2011-04-18') return ltv<=95?1.10:1.15;
+  if(d>='2010-10-04') return ltv<=95?0.85:0.90;
+  return 0.55;
+}
+/* current-era annual MIP tier (ML 2023-05) */
+function newMIPTier(base,ltv,termMonths){ const t15=termMonths<=180, hb=base>726200;
+  if(t15){ if(hb) return ltv<=78?0.15:(ltv<=90?0.40:0.65); return ltv<=90?0.15:0.40; }
+  if(hb) return ltv<=95?0.70:0.75; return ltv<=95?0.50:0.55; }
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTHSF=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function monthSel(id,def){ return `<select id="${id}">${MONTHS.map((m,i)=>`<option value="${i}" ${i===def?'selected':''}>${m}</option>`).join('')}</select>`; }
+
+/* ---------- state ---------- */
+const S={ product:'fha', client:false, hidden:{}, dcType:'conv', borrower:{name:'',addr:'',zip:'',fico:''}, fhaBring:true, showMore:false, ackOver:false,
+  debts:[ {name:'Visa',bal:8400,pay:260}, {name:'Capital One',bal:5200,pay:180}, {name:'Auto loan',bal:17500,pay:489} ] };
+function gv(id,def){ const el=document.getElementById(id); if(!el) return def;
+  if(el.type==='checkbox') return el.checked;
+  if(el.type==='date'){ const d=parseDate(el.value); return d||def; }
+  if(el.tagName==='SELECT') return el.value;
+  const n=parseFloat(String(el.value).replace(/[,$%\s]/g,'')); return isFinite(n)?n:def; }
+
+/* ---------- input builders ---------- */
+function numF(id,label,val,hint,ph){ return `<div class="f"><label for="${id}">${label}</label><input id="${id}" inputmode="decimal" value="${val}" ${ph?`placeholder="${ph}"`:''}>${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+function dateF(id,label,val,hint){ return `<div class="f"><label for="${id}">${label}</label><input type="date" id="${id}" value="${val}">${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+function chkF(id,label,on,hint){ return `<div class="f"><label for="${id}">${label}</label><input type="checkbox" id="${id}" ${on?'checked':''}>${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+function selF(id,label,opts,def,hint){ return `<div class="f"><label for="${id}">${label}</label><select id="${id}">${opts.map(o=>`<option value="${o[0]}" ${o[0]===def?'selected':''}>${o[1]}</option>`).join('')}</select>${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+
+function currentLoanBlock(p){
+  const d=addMonths(TODAY,-30);
+  return `<fieldset><legend>Current loan</legend>
+  ${dateF(p+'_close','Closing date of current loan', iso(new Date(d.getFullYear(),d.getMonth(),15,12)))}
+  ${p==='fha'
+    ? numF('fha_dp','Down payment % on purchase','3.5','Base loan = price − down payment; total = base + 1.75% UFMIP rolled in. All derived for you.')
+      +numF('fha_oamt_ov','Original total loan (override) $','','From the statement if known. REQUIRED when last loan was a refinance.')
+    : numF(p+'_oamt','Original loan amount','385,000')}
+  ${numF(p+'_rate','Current rate %','6.875')}
+  ${chkF(p+'_arm','Current loan is an ARM', false,'Rate resets — amortized estimates don’t work. Enter TODAY’s actual rate above and the statement balance below (required).')}
+  ${selF(p+'_term','Original term',[['360','30 yr'],['300','25 yr'],['240','20 yr'],['180','15 yr'],['120','10 yr']],'360')}
+  ${selF(p+'_ptype','Last loan was',[['purchase','Purchase'],['refi','Refinance']],'purchase')}
+  ${numF(p+'_balov','Known balance (override)','','Optional — from credit or statement. Blank = amortized estimate.')}
+  ${p==='va'?'':numF(p+'_mipnow','Current monthly MI'+(p==='fha'?'P':' / PMI')+' $', p==='fha'?'':'0', p==='fha'?'Blank = estimated from closing date, LTV & that era’s MIP table.':'')}
+  ${numF(p+'_escnow','Current monthly escrow $','320','Taxes + insurance in today’s payment.')}
+  ${numF(p+'_escbal','Current escrow balance $','','From the mortgage statement. Blank = ROUGH ESTIMATE only — confirm before quoting the refund.')}
+  </fieldset>`;
+}
+function feeBlock(p, streamline){
+  const fha=p==='fha';
+  return `<fieldset><legend>Lender &amp; title fees</legend>
+  ${numF(p+'_uw','Underwriting $', streamline?'595':'1,395', streamline?'Streamline default $595.':'Full doc default $1,395.')}
+  ${chkF(p+'_proc','Add processor (+$'+(streamline?'599':'899')+')', false)}
+  ${fha?'':((p==='conv'||p==='va')
+    ? numF(p+'_pts','Points % (Lender Credit −%)','0','Positive = points charged. Negative = lender credit from pricing.')
+    : numF(p+'_pts','Points %','0','Lender fee points, % of loan.'))}
+  ${p==='conv'?numF('conv_appr','Appraisal (est.) $','650','Baseline estimate — adjust per AMC quote. Added to loan costs.'):''}
+  ${numF(p+'_title','Title fees $','', 'Quote this per file.','e.g. 1,400')}
+  ${p==='dc'
+    ? numF('dc_creditflat','Lender credit $','0','Applied against costs if we have one.')
+    : ''}
+  </fieldset>`;
+}
+function newLoanBlock(p, opts={}){
+  return `<fieldset><legend>New loan</legend>
+  ${dateF(p+'_nclose','Estimated closing date', iso(addDays(TODAY,21)))}
+  ${numF(p+'_nrate','New rate %', opts.nrate||'5.875')}
+  ${selF(p+'_nterm','New term', Array.from({length:21},(_,i)=>{const y=30-i;return [String(y*12), y+' yr'];}), opts.nterm||'360','Flex terms — any year 10–30.')}
+  ${opts.armOpts?selF(p+'_ntype','New loan type',[['fixed','Fixed']].concat(opts.armOpts.map(a=>[a,a+' ARM'])),'fixed','ARMs quote at the initial rate on a 30-yr amortization — the term select above is ignored.'):''}
+  ${chkF(p+'_holding','Client holding payment until closing', false,'They’re skipping the payment due this month — adds last month’s full interest plus this month’s days to the payoff automatically.')}
+  ${opts.extra||''}
+  </fieldset>`;
+}
+function escrowBlock(p){
+  const allowWaive=(p==='conv'||(p==='dc'&&S.dcType==='conv'));
+  return `<fieldset><legend>Escrows <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:500">(2-mo cushion)</span></legend>
+  ${allowWaive?chkF(p+'_waive','Waive escrows', false,'Client pays taxes & insurance directly — removed from both payments for apples-to-apples.'):''}
+  ${numF(p+'_hoi','Homeowners insurance / yr $','1,850')}
+  ${(p==='conv'||p==='va')
+    ?`<div class="f" id="${p}_hoiauto"><label>HOI due month</label><div class="hint" style="grid-column:auto;margin:0">Auto — anniversary of closing date</div></div>
+      <div class="f" id="${p}_hoimrow" hidden><label>HOI due month</label>${monthSel(p+'_hoim',TODAY.getMonth())}<div class="hint">Last loan was a refi — anniversary isn’t the renewal. Set the real month.</div></div>`
+    :`<div class="f"><label>HOI due month</label>${monthSel(p+'_hoim',TODAY.getMonth())}</div>`}
+  ${(p==='conv'||p==='va')
+    ?`<details style="margin:2px 0 8px"><summary style="cursor:pointer; font:700 11.5px var(--font-head); letter-spacing:.7px; text-transform:uppercase; color:var(--moxie-deep)">Property taxes — show more</summary><div style="margin-top:8px">
+      ${numF(p+'_tax','Property taxes / yr $','2,600','Auto tax backend coming — edit only if the default is off.')}
+      ${selF(p+'_taxfreq','Tax billing',[['2','Semi-annual'],['1','Annual']],'2')}
+      <div class="f"><label>1st tax due month</label>${monthSel(p+'_taxm',9)}</div>
+      <div class="f" id="${p}_taxm2row"><label>2nd tax due month</label>${monthSel(p+'_taxm2',2)}<div class="hint">Set both actual months (e.g. AZ Oct/Mar, some counties Nov/Feb).</div></div>
+      </div></details>`
+    :`${numF(p+'_tax','Property taxes / yr $','2,600')}
+      ${selF(p+'_taxfreq','Tax billing',[['2','Semi-annual'],['1','Annual']],'2')}
+      <div class="f"><label>1st tax due month</label>${monthSel(p+'_taxm',9)}</div>
+      <div class="f" id="${p}_taxm2row"><label>2nd tax due month</label>${monthSel(p+'_taxm2',2)}<div class="hint">Set both actual months (e.g. AZ Oct/Mar, some counties Nov/Feb).</div></div>`}
+  ${chkF(p+'_netfund','Net fund escrows', false,'Old escrow balance credited against the payoff — usually same-servicer only. Lowers loan amount; escrow refund becomes $0.')}
+  ${p==='conv'?'':chkF(p+'_escfin','Finance escrow deposit', p!=='fha', p==='fha'?'FHA Streamline can’t finance costs/prepaids — escrow rebuild is paid at closing or by credit.':'Rolls the Escrow Rebuild (the new escrow account’s starting deposit) into the loan so the borrower doesn’t pay it at closing. Raises the loan amount by that deposit.')}
+  </fieldset>`;
+}
+
+/* ---------- product forms ---------- */
+function renderInputs(){
+  const p=S.product; let html='';
+  if(p==='va') html=`<div class="card"><h2>VA IRRRL inputs</h2><div class="body">
+    ${currentLoanBlock('va')}
+    ${newLoanBlock('va',{extra:
+      chkF('va_exempt','Veteran exempt — disability', false,'Service-connected disability waives the 0.5% funding fee. Always ask.')+
+      chkF('va_finfee','Finance funding fee', true)+
+      chkF('va_fincosts','Finance closing costs', true)})}
+    ${feeBlock('va',true)}
+    ${escrowBlock('va')}
+  </div></div>`;
+  if(p==='fha'){
+    const d2=addMonths(TODAY,-30);
+    html=`<div class="card"><h2>FHA Streamline — required</h2><div class="body">
+    <fieldset><legend>Current loan</legend>
+    ${dateF('fha_close','Closing date of current loan', iso(new Date(d2.getFullYear(),d2.getMonth(),15,12)))}
+    ${numF('fha_rate','Current rate %','6.875')}
+    ${chkF('fha_arm','Current loan is an ARM', false,'Rate resets — enter TODAY’s actual rate above and the statement balance (required, in overrides).')}
+    ${selF('fha_term','Original term',[['360','30 yr'],['300','25 yr'],['240','20 yr'],['180','15 yr'],['120','10 yr']],'360')}
+    ${selF('fha_ptype','Last loan was',[['purchase','Purchase'],['refi','Refinance']],'purchase')}
+    ${numF('fha_price','Purchase price / value at last loan $','398,000','Purchase → price; refi → appraised value.')}
+    ${numF('fha_dp','Down payment % on purchase','3.5','Base = price − down; total = base + 1.75% UFMIP. Derived for you.')}
+    ${numF('fha_curpay','Current total payment $','','REQUIRED — from the mortgage statement or credit report. Catches escrow shortages being spread.')}
+    <div id="fha_reqslot"></div>
+    </fieldset>
+    <fieldset><legend>New loan</legend>
+    ${dateF('fha_nclose','Estimated closing date', iso(addDays(TODAY,21)))}
+    ${numF('fha_nrate','New rate %','5.875')}
+    ${selF('fha_nterm','New term', Array.from({length:21},(_,i)=>{const y=30-i;return [String(y*12), y+' yr'];}),'360','Flex terms — any year 10–30.')}
+    ${chkF('fha_holding','Client holding payment until closing', false,'Skipping the payment due this month — adds last month’s interest + this month’s days to the payoff.')}
+    </fieldset>
+    <fieldset><legend>Fees &amp; pricing</legend>
+    ${numF('fha_uw','Underwriting $','595','Streamline default $595.')}
+    ${chkF('fha_proc','Add processor (+$599)', false)}
+    ${numF('fha_title','Title fees $','','REQUIRED — quote this per file.','e.g. 1,400')}
+    ${numF('fha_ysp','Pricing credit / YSP %','0','From the rate sheet at the chosen rate.')}
+    ${numF('fha_comp','Target comp %','2.5','Borrower credit = YSP − comp.')}
+    </fieldset>
+    <fieldset><legend>Escrows <span style="text-transform:none;letter-spacing:0;color:var(--muted);font-weight:500">(2-mo cushion)</span></legend>
+    ${numF('fha_escnow','Current monthly escrow $','320','Taxes + insurance in today’s payment.')}
+    ${numF('fha_hoi','Homeowners insurance / yr $','1,850')}
+    <div class="f" id="fha_hoiauto"><label>HOI due month</label><div class="hint" style="grid-column:auto;margin:0">Auto — anniversary of closing date</div></div>
+    <div class="f" id="fha_hoimrow" hidden><label>HOI due month</label>${monthSel('fha_hoim',TODAY.getMonth())}<div class="hint">Last loan was a refi — the anniversary isn’t the renewal. Set the real month.</div></div>
+    </fieldset>
+    </div></div>
+    <div class="card" style="margin-top:14px"><h2>Optional — overrides &amp; extras</h2><div class="body">
+    <div id="fha_optslot"><div id="fha_f_oamt">${numF('fha_oamt_ov','Original total loan (override) $','','From the statement. REQUIRED when last loan was a refinance.')}</div>
+    <div id="fha_f_balov">${numF('fha_balov','Known balance (override) $','','From credit or statement. Blank = amortized estimate.')}</div></div>
+    ${numF('fha_mipnow','Current monthly MIP $','','Blank = estimated from closing date, LTV & that era’s MIP table.')}
+    ${numF('fha_escbal','Current escrow balance $','','From the statement. Blank = ROUGH ESTIMATE only.')}
+    ${numF('fha_val','Est. current home value $','','LO only — drives conventional-alternative suggestion.')}
+    ${selF('fha_miprate','New annual MIP %',[['auto','Auto — from original value'],['0.55','0.55% (LTV > 95%)'],['0.50','0.50% (LTV ≤ 95%)'],['0.15','0.15% (15yr ≤ 90%)'],['0.40','0.40% (15yr > 90%)'],['0.70','0.70% high-bal'],['0.75','0.75% high-bal']],'auto','Auto tiers off the prior loan’s value — no appraisal on a streamline.')}
+    ${chkF('fha_netfund','Net fund escrows', false,'Old escrow balance credited against payoff — usually same-servicer only. Escrow refund becomes $0.')}
+    <details style="margin-top:6px"><summary style="cursor:pointer; font:700 11.5px var(--font-head); letter-spacing:.7px; text-transform:uppercase; color:var(--moxie-deep)">Property taxes — show more</summary>
+    <div style="margin-top:8px">
+    ${numF('fha_tax','Property taxes / yr $','2,600','Auto tax backend coming — edit only if the default is off.')}
+    ${selF('fha_taxfreq','Tax billing',[['2','Semi-annual'],['1','Annual']],'2')}
+    <div class="f"><label>1st tax due month</label>${monthSel('fha_taxm',9)}</div>
+    <div class="f" id="fha_taxm2row"><label>2nd tax due month</label>${monthSel('fha_taxm2',2)}<div class="hint">Set both actual months (e.g. AZ Oct/Mar, some counties Nov/Feb).</div></div>
+    </div></details>
+    </div></div>
+    <div class="card" style="margin-top:14px"><h2>One-off scenarios</h2><div class="body">
+    ${chkF('fha_old','Endorsed on/before 5/31/2009', false,'Grandfathered: 0.01% UFMIP / 0.55% MIP.')}
+    ${chkF('fha_inv','Investment property', false,'Max base = UPB only — no interest or MIP due allowed.')}
+    </div></div>`;
+  }
+  if(p==='conv') html=`<div class="card"><h2>Conventional R/T inputs</h2><div class="body">
+    ${currentLoanBlock('conv')}
+    <fieldset><legend>Property</legend>
+    ${numF('conv_value','Estimated home value $','','REQUIRED — sets LTV for pricing & PMI.')}
+    </fieldset>
+    ${newLoanBlock('conv',{armOpts:['5/1','7/1','10/1','5/6','7/6','10/6'],extra:
+      numF('conv_pmi','New monthly PMI $','0')+
+      chkF('conv_fincosts','Finance closing costs', true)})}
+    ${feeBlock('conv',false)}
+    ${escrowBlock('conv')}
+  </div></div>`;
+  if(p==='dc'){ const t=S.dcType;
+    html=`<div class="card"><h2>Debt consolidation inputs</h2><div class="body">
+    ${selF('dc_type','Loan program',[['conv','Conventional'],['va','VA'],['fha','FHA']],t)}
+    ${currentLoanBlock('dc')}
+    <fieldset><legend>Property & program</legend>
+    ${numF('dc_value','Estimated home value $','560,000')}
+    ${t==='conv'?numF('dc_maxltv','Max LTV %','80','No PMI on conventional cash-out — capped at 80% LTV.'):''}
+    ${t==='va'?selF('dc_use','Funding fee',[['2.15','First use — 2.15%'],['3.30','Subsequent — 3.30%']],'2.15')+chkF('dc_exempt','Veteran exempt — disability',false,'Waives the fee. Always ask.')+numF('dc_maxltv','Max LTV %','90'):''}
+    ${t==='fha'?numF('dc_maxltv','Max LTV %','80')+selF('dc_miprate','Annual MIP %',[['0.55','0.55%'],['0.50','0.50%'],['0.70','0.70% high-bal'],['0.75','0.75% high-bal']],'0.55'):''}
+    </fieldset>
+    <fieldset class="debts"><legend>Debts paid off</legend>
+      <table><thead><tr><th>Name</th><th style="width:90px">Balance</th><th style="width:76px">Payment</th><th></th></tr></thead>
+      <tbody>${S.debts.map((d,i)=>`<tr>
+        <td><input data-d="name" data-i="${i}" value="${d.name}"></td>
+        <td class="n"><input data-d="bal" data-i="${i}" inputmode="decimal" value="${d.bal.toLocaleString()}"></td>
+        <td class="n"><input data-d="pay" data-i="${i}" inputmode="decimal" value="${d.pay.toLocaleString()}"></td>
+        <td><button class="del" data-del="${i}" title="Remove">×</button></td></tr>`).join('')}</tbody></table>
+      <button class="addbtn" id="addDebt" type="button">+ Add debt</button>
+    </fieldset>
+    ${newLoanBlock('dc',{nrate:'6.125',armOpts:t==='conv'?['5/1','7/1','10/1','5/6','7/6','10/6']:['3/1','5/1','7/1','10/1']})}
+    ${feeBlock('dc',false)}
+    ${escrowBlock('dc')}
+  </div></div>`;
+  }
+  const b=S.borrower;
+  const bcard=`<div class="card" style="margin-bottom:14px"><h2>Borrower</h2><div class="body">
+    <div class="f"><label for="bor_name">Borrower name</label><input id="bor_name" value="${esc(b.name)}"></div>
+    <div class="f"><label for="bor_addr">Street address</label><input id="bor_addr" value="${esc(b.addr)}"></div>
+    <div class="f"><label for="bor_zip">ZIP code</label><input id="bor_zip" inputmode="numeric" value="${esc(b.zip)}"></div>
+    <div class="f"><label for="bor_fico">FICO score</label><input id="bor_fico" inputmode="numeric" value="${esc(b.fico)}"><div class="hint">LO only — for pricing later. Never shown to the client.</div></div>
+  </div></div>`;
+  $('#inputs').innerHTML=bcard+html;
+  syncTaxRows(); syncFhaRows();
+}
+function syncTaxRows(){ document.querySelectorAll('select[id$="_taxfreq"]').forEach(s=>{ const row=document.getElementById(s.id.replace('_taxfreq','_taxm2row')); if(row) row.hidden=s.value!=='2'; }); }
+/* FHA: refi flips HOI month to manual and moves the override fields up to required */
+function syncFhaRows(){
+  ['fha','conv','va'].forEach(p=>{
+    const pt=document.getElementById(p+'_ptype'); if(!pt) return;
+    const refi=pt.value==='refi';
+    const auto=document.getElementById(p+'_hoiauto'), man=document.getElementById(p+'_hoimrow');
+    if(auto) auto.hidden=refi; if(man) man.hidden=!refi;
+  });
+  const pt=document.getElementById('fha_ptype'); if(!pt) return;
+  const refi=pt.value==='refi';
+  const req=document.getElementById('fha_reqslot'), opt=document.getElementById('fha_optslot');
+  const f1=document.getElementById('fha_f_oamt'), f2=document.getElementById('fha_f_balov');
+  if(req&&opt&&f1&&f2){ const tgt=refi?req:opt; if(f1.parentElement!==tgt){ tgt.appendChild(f1); tgt.appendChild(f2); } }
+}
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+
+/* ---------- sheet rendering ---------- */
+const EYE='<svg viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></svg>';
+const EYEOFF='<svg viewBox="0 0 24 24"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 4l16 16"/></svg>';
+const deltaSign={};
+function dcell(d){
+  if(!d) return `<div class="vbox blank"></div>`;
+  const key=S.product+':'+d.id;
+  if(!(key in S.hidden)) S.hidden[key]=d.good===false; /* bad numbers start hidden — LO can reveal */
+  if(key in deltaSign && deltaSign[key]!==d.good) S.hidden[key]=d.good===false; /* sign flipped: good auto-shows, bad auto-hides */
+  deltaSign[key]=d.good;
+  const off=S.hidden[key];
+  const cls=d.good===true?'save':d.good===false?'bad':'';
+  return `<div class="vbox dcell ${cls} ${off?'doff':''}"><button class="eye" data-eye="${key}" title="${off?'Hidden from client — click to show':'Click to hide from client'}">${off?EYEOFF:EYE}</button><span>${d.val}</span></div>`;
+}
+function srow(id,label,cur,neu,{sub='',curCls='',neuCls='',defHide=false,loOnly=false,delta=null,more=false,missing=false,keepSub=false}={}){
+  const key=S.product+':'+id;
+  if(!(key in S.hidden)) S.hidden[key]=defHide;
+  const off=S.hidden[key];
+  const box=(v,cls)=> v===null?`<div class="vbox blank"></div>`:`<div class="vbox ${cls}">${v}</div>`;
+  return `<div class="srow ${off?'off':''} ${loOnly?'lo-only':''} ${more?'morerow':''} ${missing?'missingrow':''}">
+    <button class="eye" data-eye="${key}" title="${off?'Hidden from client — click to show':'Click to hide from client'}">${off?EYEOFF:EYE}</button>
+    <div class="lblc">${label}${sub?`<span class="sub${keepSub?' subc':''}">${sub}</span>`:''}</div>
+    ${box(cur,curCls)}${box(neu,neuCls)}${dcell(delta)}</div>`;
+}
+function sect(t){ return `<div class="srow"><span></span><div class="secttl">${t}</div></div>`.replace('<span></span>',S.client?'':'<span></span>'); }
+function head(title){
+  const b=S.borrower;
+  const forline=(b.name||b.addr||b.zip)?`<div class="forline">Prepared for <b>${esc(b.name)}</b><span class="sub2">${b.addr?' — '+esc(b.addr):''}${b.zip?', '+esc(b.zip):''}</span></div>`:'';
+  return forline+`<div class="srow shead"><span></span>
+    <div class="logo"><span class="mm">M</span><span class="m1">MOXIE</span><span class="m2">MORTGAGE</span><span class="m3">DIVISION OF NEXA MORTGAGE</span></div>
+    <div class="colhead">Current</div><div class="colhead">${title||'New'}</div><div class="colhead">Savings</div></div>`;
+}
+function pill(ok,txt){ return `<span class="pill ${ok===true?'ok':ok===false?'no':'warn'}">${ok===true?'✓':ok===false?'✕':'!'} <b>${txt}</b></span>`; }
+function sheetOut(title, bodyHtml, checks, sugg, note){
+  $('#results').innerHTML=`<div class="rgrid"><div class="sheet">${head(title)}${bodyHtml}</div>
+    <aside class="lopanel lo-only"><div class="lp-h">LO Panel</div><div class="pills">${checks}</div>${sugg||''}<div class="note">${note}</div></aside></div>`;
+}
+
+/* ---------- core compute ---------- */
+function fees(p, payoff){
+  const uw=gv(p+'_uw',0), proc=gv(p+'_proc',false)?((p==='va'||p==='fha')?599:899):0, title=gv(p+'_title',0), other=250; /* streamline processor $599, full doc $899 */
+  const pts=gv(p+'_pts',0);
+  const appr=p==='conv'?gv('conv_appr',650):0;
+  let ysp=0,comp=0,yspAmt=0,compAmt=0,credit=0,bpComp=0;
+  if(p==='dc'){ credit=gv('dc_creditflat',0); } /* cash-out: flat credit only, no YSP structure */
+  else if(p==='conv'||p==='va'){ /* negative points = lender credit; no YSP/comp structure */ }
+  else { ysp=gv(p+'_ysp',0); comp=gv(p+'_comp',0); yspAmt=payoff*ysp/100; compAmt=payoff*comp/100;
+    const net=yspAmt-compAmt; credit=Math.max(0,net); bpComp=Math.max(0,-net); }
+  const flat=uw+proc+title+other+appr;
+  const ptsAmt=(payoff+flat)*pts/100;
+  return {uw,proc,title,other,appr,pts,ptsAmt,ysp,comp,yspAmt,compAmt,credit,bpComp,total:Math.max(0,flat+ptsAmt+bpComp-credit)};
+}
+function baseCalc(p){
+  const close=gv(p+'_close',addMonths(TODAY,-30));
+  let oamt=gv(p+'_oamt',0), obase=null, oamtMissing=false;
+  if(p==='fha'){
+    /* derive original total from price + down payment (purchase), or take the statement override */
+    const oldL=gv('fha_old',false), price=gv('fha_price',0), dp=gv('fha_dp',3.5), ov=gv('fha_oamt_ov',NaN);
+    const mult=oldL?1.0001:1.0175;
+    if(isFinite(ov)&&ov>0){ oamt=ov; obase=ov/mult; }
+    else if(gv('fha_ptype','purchase')==='purchase'&&price>0){ obase=price*(1-dp/100); oamt=obase*mult; }
+    else { oamt=0; obase=0; oamtMissing=true; }
+  }
+  const rate=gv(p+'_rate',0), term=+gv(p+'_term','360');
+  const nclose=gv(p+'_nclose',addDays(TODAY,21));
+  const fund=fundingDate(nclose);
+  const holding=gv(p+'_holding',false);
+  const firstPay=firstPaymentFromClose(close);
+  let made=paymentsMadeBy(firstPay,fund);
+  if(holding&&made>0) made-=1; /* held payment = one fewer made, balance one payment behind */
+  const estBal=balAfter(oamt,rate,term,made);
+  const balov=gv(p+'_balov',NaN);
+  const bal=isFinite(balov)&&balov>0?balov:estBal;
+  const arm=gv(p+'_arm',false);
+  const balMissing=arm&&!(isFinite(balov)&&balov>0);
+  const curPI=pmt(oamt,rate,term);
+  const curMI=gv(p+'_mipnow',0);
+  const waive=gv(p+'_waive',false);
+  const curEsc=waive?0:gv(p+'_escnow',0);
+  const remaining=Math.max(0,term-made);
+  const nrate=gv(p+'_nrate',0), nterm=+gv(p+'_nterm','360');
+  /* payoff interest: 1st of funding month through funding day; holding a payment adds all of the prior month */
+  const prevDim=new Date(fund.getFullYear(),fund.getMonth(),0).getDate();
+  const pdays=fund.getDate()+(holding?prevDim:0);
+  let payoff=bal+bal*(rate/100)/365*pdays;
+  const nFirstPay=firstPaymentFromClose(nclose);
+  /* FHA, VA & Conv: purchase → HOI renews on closing anniversary; refi → LO sets the real month */
+  const hoiMonth = (p==='fha'||p==='conv'||p==='va')
+    ? (gv(p+'_ptype','purchase')==='refi' ? +gv(p+'_hoim',TODAY.getMonth()) : close.getMonth())
+    : +gv(p+'_hoim',0);
+  const items=[{annual:gv(p+'_hoi',0),dueMonths:[hoiMonth]}];
+  const taxA=gv(p+'_tax',0), taxM=+gv(p+'_taxm',9), taxM2=+gv(p+'_taxm2',2);
+  if(gv(p+'_taxfreq','2')==='2') items.push({annual:taxA,dueMonths:taxM===taxM2?[taxM]:[taxM,taxM2]});
+  else items.push({annual:taxA,dueMonths:[taxM]});
+  let esc={deposit:0,monthly:0};
+  if(!waive) esc=escrowDeposit(items,nFirstPay);
+  /* estimate of old servicer's escrow refund: cushion + months accrued since each item's last due date */
+  const curEscRaw=gv(p+'_escnow',0);
+  let escRefund=0, escRefundEst=true;
+  const escBal=gv(p+'_escbal',NaN);
+  if(isFinite(escBal)&&escBal>0){ escRefund=escBal; escRefundEst=false; }
+  else if(curEscRaw>0){
+    const totA=items.reduce((s,i)=>s+i.annual,0), ncM=nclose.getMonth();
+    const msW=totA>0?items.reduce((s,i)=>{ const ms=Math.min(...i.dueMonths.map(dm=>((ncM-dm)+12)%12)); return s+ms*i.annual; },0)/totA:0;
+    escRefund=curEscRaw*(CUSHION+msW);
+  }
+  /* net-funded escrows: old balance credited against payoff, no refund */
+  let netEsc=0;
+  if(gv(p+'_netfund',false)&&escRefund>0){ netEsc=escRefund; escRefund=0; payoff-=netEsc; }
+  const fee=fees(p,payoff);
+  /* prepaid interest on new loan: funding day through end of closing month */
+  const prepDays=new Date(fund.getFullYear(),fund.getMonth()+1,0).getDate()-fund.getDate()+1;
+  return {close,oamt,obase,oamtMissing,rate,term,firstPay,made,estBal,bal,arm,balMissing,curPI,curMI,curEsc,curEscRaw,escRefund,escRefundEst,netEsc,prepDays,fund,holding,remaining,nrate,nterm,fee,costs:fee.total,payoff,pdays,nclose,esc,waive,
+    skipped:Math.max(1,monthsBetween(firstOfNextMonth(nclose),nFirstPay))+(holding?1:0)};
+}
+
+/* comparison body shared by R/T products: returns rows html + totals */
+function compareBody(c, newPI, newMI, miLbl, loan, buildRows, opts={}){
+  const curTot=c.curPI+c.curMI+c.curEsc;
+  const newTot=newPI+newMI+c.esc.monthly;
+  const save=curTot-newTot;
+  const oldRemInt=c.curPI*c.remaining-c.bal;
+  const newInt=totInterest(loan,c.nrate,c.nterm);
+  const intSaved=oldRemInt-newInt;
+  const shaved=c.remaining-c.nterm;
+  const be=save>0?Math.ceil(c.costs/save):null;
+  let h='';
+  h+=srow('bal','Starting Balance', c.oamt>0?fmt$(c.oamt):'REQUIRED', fmt$(loan), {missing:!(c.oamt>0), sub:c.oamtMissing?'refi w/o override — enter original total loan':''});
+  h+=srow('curbal', c.arm?'Current Balance':'Current Balance (est.)', c.balMissing?'REQUIRED':fmt$(c.bal), null, {missing:!!c.balMissing, sub:c.balMissing?'ARM — enter the statement balance':''});
+  h+=srow('rate','Rate', fmtPct(c.rate), fmtPct(c.nrate), {delta:{id:'d_rate',val:'−'+fmtPct(Math.abs(c.rate-c.nrate)),good:c.rate-c.nrate>0}});
+  h+=srow('term','Term', (c.term/12)+' yr', c.newArm? c.newArm.label+' ARM' : (c.nterm/12)+' yr', {sub:c.newArm?'fixed '+c.newArm.years+' yrs · 30-yr amortization · adjusts after':''});
+  h+=srow('pi','P & I', fmt$2(c.curPI), fmt$2(newPI));
+  if(S.product!=='va') h+=srow('mi', miLbl, fmt$2(c.curMI), fmt$2(newMI), {defHide:c.curMI===0&&newMI===0});
+  h+=srow('esc','Escrow (T&I)', c.waive?'waived':fmt$2(c.curEsc), c.waive?'waived':fmt$2(c.esc.monthly), {defHide:c.waive});
+  h+=srow('tot','Total Payment', fmt$2(curTot), fmt$2(newTot), {neuCls:'save', missing:!!c.statedPayMissing, sub:c.statedPayMissing?'enter current total payment (statement / credit report)':'', delta:{id:'d_msave',val:fmt$2(save)+'/mo',good:save>=0}});
+  h+=srow('ysave','Annual Savings', null, fmt$(save*12), {neuCls:save>=0?'save':'bad', defHide:true});
+  h+=`<div class="gap"></div>`;
+  h+=srow('pmade','Payments Made', c.made, null);
+  h+=srow('pleft','Payments Left', c.remaining, c.nterm, {delta:{id:'d_shaved',val:shaved>=0?shaved+' fewer':Math.abs(shaved)+' added',good:shaved>=0}});
+  h+=srow('intleft','Interest Left', fmt$(oldRemInt), fmt$(newInt), {sub:[c.arm?'current side assumes the ARM stays at '+fmtPct(c.rate):'', c.newArm?'new side assumes the initial rate holds — adjusts after '+c.newArm.years+' yrs':''].filter(Boolean).join(' · '), delta:{id:'d_isave',val:fmt$(Math.abs(intSaved))+(intSaved>=0?' saved':' added'),good:intSaved>=0}});
+  h+=`<div class="gap"></div>`;
+  h+=buildRows;
+  h+=`<div class="gap"></div>`;
+  h+=srow('x_skip','Payments Skipped', null, '~'+c.skipped, {sub:'next due '+fmtDate(firstPaymentFromClose(c.nclose)), neuCls:'save', keepSub:true});
+  { /* client-facing heads-up about the held / brought payment */
+    const held=MONTHSF[c.fund.getMonth()];
+    let note='';
+    if(c.holding&&opts.bring) note='Hold your '+held+' payment — you’ll bring it to closing as your new payment instead.';
+    else if(c.holding){ const names=Array.from({length:c.skipped},(_,i)=>MONTHSF[(c.fund.getMonth()+i)%12]);
+      note='Hold your '+held+' payment (set it aside — don’t spend it) — you’ll skip '+c.skipped+' payments ('+names.join(' & ')+').'; }
+    else if(opts.bring) note='Bring your new payment amount to closing — that covers your funds due.';
+    if(note){ const key=S.product+':x_cnote'; if(!(key in S.hidden)) S.hidden[key]=false; const off=S.hidden[key];
+      h+=`<div class="srow ${off?'off':''}"><button class="eye" data-eye="${key}" title="${off?'Hidden from client':'Click to hide from client'}">${off?EYEOFF:EYE}</button><div class="cnote" style="grid-column:2/-1">${note}</div></div>`; }
+  }
+  h+=srow('x_escref','Escrow Refund (old servicer)', null, c.netEsc>0?'$0':(c.escRefundEst?'≈ ':'')+fmt$(c.escRefund), {sub:c.netEsc>0?'net-funded — balance applied to payoff':(c.escRefundEst?'⚠ ESTIMATE — enter statement balance to confirm':'from statement · mailed ~30 days after payoff'), defHide:c.escRefund<=0&&c.netEsc<=0, keepSub:true});
+  if(!opts.noBE) h+=srow('x_be','Break-even on Costs', null, be?be+' mo':'—', {defHide:!be});
+  return {h,save,curTot,newTot};
+}
+function feeRows(c, extra){ // build section rows (new column only)
+  const f=c.fee;
+  const lender=f.uw+f.proc+f.ptsAmt;
+  let h=sect('New loan build');
+  h+=srow('b_payoff','Payoff of Current Loan', null, fmt$(c.payoff), {sub:c.netEsc>0?'net of '+fmt$(c.netEsc)+' escrow balance':'incl. interest to funding', more:S.product==='fha'});
+  const fhaHide=S.product==='fha'; /* FHA SL: costs covered by credit — hidden from client by default */
+  h+=srow('b_lender','Lender Costs', null, fmt$(lender), {defHide:fhaHide, sub:'UW '+fmt$(f.uw)+(f.proc?' + processor '+fmt$(f.proc):'')+(f.ptsAmt?(f.ptsAmt>0?' + points ':' − credit ')+fmt$(Math.abs(f.ptsAmt)):'')});
+  h+=srow('b_title','Title Fees', null, f.title?fmt$(f.title):'REQUIRED', {missing:!f.title, defHide:fhaHide, sub:f.title?'':'enter the title quote in inputs'});
+  if(f.appr) h+=srow('b_appr','Appraisal (est.)', null, fmt$(f.appr));
+  h+=srow('b_loancosts','Loan Costs', null, fmt$(lender+f.title+f.other+(f.appr||0)), {defHide:fhaHide, sub:S.product==='conv'?'lender + title + appraisal + $'+f.other+' (credit, TS, Misc. Box B)':(S.product==='fha'||S.product==='va')?'lender + title + $'+f.other+' (credit, TS, Misc. Box B)':'lender + title + $'+f.other+' appraisal/other'});
+  h+=srow('b_ysp','YSP '+f.ysp+'% / Comp '+f.comp+'%', null, fmt$(f.yspAmt)+' / '+fmt$(f.compAmt), {loOnly:true, defHide:f.yspAmt===0&&f.compAmt===0});
+  h+=srow('b_credit','Lender Credit<span class="losub"> (YSP − comp)</span>', null, f.credit?('−'+fmt$(f.credit).slice(1)):'—', {neuCls:'save', defHide:f.credit===0});
+  h+=srow('b_bpcomp','Borrower-Paid Comp', null, fmt$(f.bpComp), {neuCls:'bad', sub:'comp exceeds YSP', defHide:f.bpComp===0, more:S.product==='fha'});
+  if(c.netEsc>0) h+=srow('b_netesc','Net-Funded Escrows', null, '−'+fmt$(c.netEsc).slice(1), {neuCls:'save', sub:'old escrow balance applied to payoff — same servicer'});
+  h+=srow('b_escprep','Escrow & Prepaids', null, fmt$((c.waive?0:c.esc.deposit)+(c.prepaidInt||0)), {sub:'escrow rebuild '+fmt$(c.waive?0:c.esc.deposit)+' + prepaid interest '+fmt$(c.prepaidInt||0)+' — in the loan, but not controllable fees', defHide:(S.product==='fha')||(c.waive&&!(c.prepaidInt>0))});
+  if(extra) h+=extra;
+  return h;
+}
+
+/* ---------- products ---------- */
+function renderVA(){
+  const c=baseCalc('va');
+  const exempt=gv('va_exempt',false), finFee=gv('va_finfee',true), finCosts=gv('va_fincosts',true), escFin=gv('va_escfin',true);
+  const r=exempt?0:0.005;
+  let loan=c.payoff+(finCosts?c.costs:0)+(escFin&&!c.waive?c.esc.deposit:0);
+  const ffee=finFee? loan*r/(1-r) : loan*r;
+  if(finFee) loan+=ffee;
+  c.prepaidInt=loan*(c.nrate/100)/365*c.prepDays;
+  const newPI=pmt(loan,c.nrate,c.nterm);
+  const feeRow=srow('b_ff', exempt?'VA Funding Fee — WAIVED':'VA Funding Fee (0.5%)', null, fmt$(ffee), {neuCls:exempt?'save':''})
+    +srow('b_loan','New Loan Amount', null, fmt$(loan), {defHide:true});
+  const body=compareBody(c,newPI,0,'Mortgage Insurance',loan, feeRows(c,feeRow));
+  const season210=addDays(c.firstPay,210);
+  const eligible=new Date(Math.max(season210, addMonths(c.firstPay,6)));
+  const seasonOK=c.nclose>=eligible;
+  const drop=c.rate-c.nrate;
+  const piSave=c.curPI+c.curMI-newPI;
+  const recoup=piSave>0?Math.ceil(c.costs/piSave):Infinity;
+  let checks=pill(seasonOK,'Seasoning '+(seasonOK?'met':'not until '+fmtDate(eligible)))
+    +(c.arm
+      ? pill(true,'ARM→fixed: no rate-reduction requirement (38 USC 3709). Recoupment & seasoning still apply.')
+      : pill(drop>=0.5,'Rate drop '+fmtPct(drop)+' (≥0.5% req fixed→fixed)'))
+    +pill(recoup<=36,'Recoupment '+(isFinite(recoup)?recoup+' mo':'—')+' (≤36 req)')
+    +(exempt?pill(true,'Fee waived — disability'):pill(null,'Asked about VA disability?'));
+  if(gv('va_pts',0)>0) checks+=pill(null,'Financed discount points: ≤1 pt needs LTV ≤ 100%, >1 pt needs LTV ≤ 90% (3709(b)(4)). Verify value.');
+  if(c.balMissing) checks+=pill(false,'MISSING: statement balance — ARM, the amortized estimate is invalid.');
+  sheetOut('New — VA IRRRL', body.h, checks, '',
+    `Signs ${fmtDate(c.nclose)}, funds ${fmtDate(c.fund)} after rescission; payoff carries ${c.pdays} days interest${c.holding?' (held payment)':''}. Est. bal ${fmt$(c.estBal)} after ${c.made} pmts${gv('va_balov',0)>0?' (overridden)':''}. Note date ≥ later of 210 days after first pmt (${fmtDate(c.firstPay)}) & 6th pmt. Recoupment excludes funding fee, escrows, prepaids. Fixed→ARM needs ≥2% drop.`);
+}
+function renderFHA(){
+  const c=baseCalc('fha');
+  const old=gv('fha_old',false), inv=gv('fha_inv',false);
+  const obase=c.obase||((c.oamt||0)/1.0175);
+  /* estimate current monthly MIP when field is blank */
+  const price=gv('fha_price',0);
+  const origLTV=price>0?obase/price*100:96.5;
+  const curMIPrate=old?0.55:histMIPRate(c.close,obase,origLTV,c.term);
+  let mipEst=false;
+  if(!isFinite(gv('fha_mipnow',NaN))){ c.curMI=c.bal*curMIPrate/100/12; mipEst=true; }
+  /* statement payment override: true current total beats our computed one (escrow shortages etc.) */
+  const statedPay=gv('fha_curpay',0);
+  let impliedEsc=null;
+  if(statedPay>0){ impliedEsc=statedPay-c.curPI-c.curMI; c.curEsc=Math.max(0,impliedEsc); }
+  else c.statedPayMissing=true;
+  const origUF=obase*(old?0.0001:0.0175);
+  const refPct=ufmipRefundPct(c.close,c.fund); /* funding date, per lender worksheet */
+  const refund=origUF*refPct/100;
+  /* HUD 4000.1 max base: lesser of (A) UPB month prior + interest due + MIP due  (B) original principal incl. financed UFMIP; then minus UFMIP refund. Investment: A = UPB only. */
+  /* interest due capped at 2 months of mortgage interest (lender worksheet limit) */
+  const intDue=Math.min(c.bal*(c.rate/100)/365*c.pdays, c.bal*(c.rate/100)/12*2);
+  const mipDue=c.curMI; /* always current MIP — no override to fat-finger */
+  const balNet=c.bal-c.netEsc; /* net-funded escrows credit the payoff */
+  /* lender worksheet: ROUNDDOWN each component; Calc1 = UPB+int+MIP−refund, Calc2 = orig−refund, lesser */
+  const lineA=inv? Math.floor(balNet) : Math.floor(balNet)+Math.floor(intDue)+Math.floor(mipDue);
+  const lineB=Math.floor(c.oamt);
+  const lesser=Math.min(lineA,lineB);
+  const base=Math.max(0, Math.floor(lesser-refund));
+  const capped=lineB<lineA;
+  const newUF=base*(old?0.0001:0.0175);
+  const loan=Math.floor(base+newUF);
+  /* new MIP tier: streamline w/o appraisal → LTV off the PRIOR loan's value (HUD), not a new estimate */
+  const mipSel=gv('fha_miprate','auto');
+  const mipLTV=price>0?base/price*100:96.5;
+  const autoMIP=newMIPTier(base,mipLTV,c.nterm);
+  const mipRate=old?0.55:(mipSel==='auto'?autoMIP:parseFloat(mipSel));
+  const mMIP=loan*mipRate/100/12;
+  const newPI=pmt(loan,c.nrate,c.nterm);
+  /* sources & uses — the UFMIP refund is NETTED against the new UFMIP HUD collects,
+     so loan proceeds still cover the full payoff demand; refund is never borrower cash.
+     cash to close = payoff demand − (lesser of A/B) + flat fees + escrow deposit − lender credit */
+  const payoffDemand=balNet+intDue+mipDue;          /* what the servicer actually collects, net of net-funded escrow */
+  const trueShort=Math.max(0, payoffDemand-lesser); /* >0 only when capped at orig. balance (or investment) */
+  const flatFees=c.fee.uw+c.fee.proc+c.fee.title+c.fee.other;
+  const escDep=c.waive?0:c.esc.deposit;
+  const prepaidInt=loan*(c.nrate/100)/365*c.prepDays; c.prepaidInt=prepaidInt;
+  const cashRaw=trueShort+flatFees+escDep+prepaidInt-c.fee.credit+c.fee.bpComp;
+  const cashDue=Math.max(0,cashRaw);
+  const excessCredit=Math.max(0,-cashRaw);          /* credit beyond all costs — lost unless restructured */
+  /* collect-1-payment structure (default ON): borrower brings one new payment; anything above actual cash due becomes comp */
+  const newTotPay=newPI+mMIP+c.esc.monthly;
+  const bringOn=S.fhaBring;
+  const collect=bringOn?Math.max(cashDue,newTotPay):cashDue;
+  const extraCash=collect-cashDue;
+  const effCompAmt=c.fee.compAmt+excessCredit+extraCash;
+  const effCompPct=c.payoff>0?effCompAmt/c.payoff*100:0;
+  const fundsSub=(v,p)=>{ if(p<=0) return '';
+    if(Math.abs(v-p)<=2) return 'New payment due at closing';
+    if(v>p&&v<2*p-2) return 'New payment + '+fmt$(v-p)+' over new payment';
+    if(Math.abs(v-2*p)<=2) return '2 payments';
+    return ''; };
+  const extra=srow('b_A','A: UPB + Interest'+(inv?'':' + MIP Due'), null, fmt$(lineA), {sub:inv?'investment: UPB only':fmt$(balNet)+' + '+fmt$(intDue)+' int + '+fmt$(mipDue)+' MIP', more:true})
+    +srow('b_B','B: Original Principal Balance', null, fmt$(lineB), {sub:'incl. financed UFMIP', more:true})
+    +srow('b_ref','UFMIP Refund — netted vs new UFMIP ('+refPct+'%)', null, '−'+fmt$(refund).slice(1), {neuCls:'save',sub:'off lesser of A/B · orig UFMIP '+fmt$(origUF)+' · not cash to borrower', more:true})
+    +srow('b_base','Max Base Loan'+(capped?' (capped at orig.)':''), null, fmt$(base), {neuCls:capped?'bad':'', more:true})
+    +srow('b_uf','New UFMIP ('+(old?'0.01':'1.75')+'% of base)', null, fmt$(newUF), {sub:'HUD collects this minus the '+fmt$(refund)+' refund', more:true})
+    +srow('b_loan','New Loan Amount', null, fmt$(loan), {defHide:true})
+    +srow('b_short','Payoff Shortfall (capped)', null, fmt$(trueShort), {neuCls:'bad', sub:'payoff demand exceeds max base calc', more:true})
+    +srow('b_excess','Unused Lender Credit', null, fmt$(excessCredit), {neuCls:'bad', loOnly:true, sub:'credit exceeds all costs — restructure comp/rate', defHide:excessCredit<1&&!bringOn, more:true})
+    +`<div class="srow lo-only"><span></span><div class="lblc">Collect 1 Payment at Close<span class="sub">auto-selected — toggles structure</span></div>
+       <button type="button" class="vbox togglebtn ${bringOn?'on':''}" data-tgl="fhaBring">${bringOn?'✓ On — collect '+fmt$2(newTotPay):'Off'}</button><div class="vbox blank"></div><div class="vbox blank"></div></div>`
+    +srow('b_prepaid','Prepaid Interest ('+c.prepDays+' days)', null, fmt$(prepaidInt), {sub:'new-loan interest from funding to month end', more:true})
+    +srow('b_effcomp','Effective Comp @ this structure', null, effCompPct.toFixed(2)+'%', {loOnly:true, sub:fmt$(effCompAmt)+' = target '+c.fee.comp+'% + unused credit + extra collected', neuCls:'save'})
+    +srow('b_cash','Funds Due at Closing', null, fmt$(collect), {sub:fundsSub(collect,newTotPay), neuCls:(cashDue>newTotPay+2&&!S.ackOver)?'bad':'', keepSub:true})
+    +((cashDue>newTotPay+2)?`<div class="srow lo-only"><span></span><div class="showmore-row" style="grid-column:2/-1"><button type="button" class="vbox togglebtn ackbtn ${S.ackOver?'on':''}" data-tgl="ackOver" style="width:100%">${S.ackOver?'✓ Acknowledged — selling more than 1 payment to close':'⚠ Cash to close is MORE than 1 payment — click to acknowledge'}</button></div></div>`:'')
+    +`<div class="srow lo-only"><span></span><div class="showmore-row" style="grid-column:2/-1"><button type="button" class="addbtn" data-tgl="showMore">${S.showMore?'Hide detail ▴':'Show more ▾'}</button></div></div>`;
+  if(bringOn&&c.holding) c.skipped=Math.max(1,c.skipped-1); /* brought payment replaces the held one */
+  const body=compareBody(c,newPI,mMIP,'Monthly MIP',loan, feeRows(c,extra), {noBE:true, bring:bringOn});
+  /* ---- LO suggestions ---- */
+  const sug=[];
+  if(excessCredit>0){
+    const absorbComp=(c.fee.compAmt+excessCredit)/c.payoff*100;
+    sug.push('<b>'+fmt$(excessCredit)+' of lender credit is unused</b> — credit exceeds every cost on the file and can’t go to the borrower as cash. Raise comp to <b>'+absorbComp.toFixed(2)+'%</b> to absorb it, or take a lower rate / smaller YSP.');
+  }
+  if(bringOn&&extraCash>0) sug.push('Collect-1-payment is ON: borrower brings <b>'+fmt$2(collect)+'</b> (actual need '+fmt$(cashDue)+') — the extra '+fmt$(extraCash)+' lifts effective comp to <b>'+effCompPct.toFixed(2)+'%</b>.');
+  if(bringOn&&extraCash<=0&&cashDue>0) sug.push('Cash to close '+fmt$(cashDue)+' already ≥ one payment ('+fmt$2(newTotPay)+') — no comp bump from collect-1-payment.');
+  if(!bringOn&&newTotPay>cashDue) sug.push('Collect-1-payment is OFF. Turning it on collects '+fmt$2(newTotPay)+' and lifts comp to <b>'+((c.fee.compAmt+excessCredit+(newTotPay-cashDue))/c.payoff*100).toFixed(2)+'%</b>.');
+  { /* smart term ladder: nearest whole year forward, max forward that still saves, and the middle */
+    const totFor=y=>{ const r2=old?0.55:(mipSel==='auto'?newMIPTier(base,mipLTV,y*12):mipRate);
+      return pmt(loan,c.nrate,y*12)+loan*r2/100/12+c.esc.monthly; };
+    const remY=c.remaining/12;
+    let near=Math.min(30, c.remaining%12===0 ? remY-1 : Math.floor(remY));
+    let maxF=null;
+    for(let y=near; y>=10; y--){ if(totFor(y)<=body.curTot) maxF=y; else break; }
+    if(maxF!==null&&near>=10){
+      const mid=Math.round((near+maxF)/2);
+      const opts=[...new Set([near,mid,maxF])].filter(y=>y>=10&&totFor(y)<=body.curTot).sort((a,b)=>b-a);
+      const lab=y=>y===maxF&&opts.length>1?'max forward':y===near&&opts.length>1?'nearest':'middle';
+      const parts=opts.map(y=>'<b>'+y+'-yr</b> ('+lab(y)+') — saves '+fmt$(body.curTot-totFor(y))+'/mo, cuts '+(c.remaining-y*12)+' pmts');
+      sug.push('Term options vs '+remY.toFixed(1)+' yrs left — every one still saves monthly: '+parts.join(' · ')+'. Judgement call.');
+    }
+  }
+  const estVal=gv('fha_val',0);
+  if(estVal>0){
+    const realLTV=base/estVal*100;
+    if(realLTV<=80) sug.push('Est. real LTV <b>'+realLTV.toFixed(1)+'%</b> — a conventional R/T could eliminate the '+fmt$2(mMIP)+'/mo MIP entirely. Worth pricing both.');
+    else sug.push('Est. real LTV '+realLTV.toFixed(1)+'% — not conventional-no-MI territory yet. Streamline MIP stays tiered off original value ('+mipLTV.toFixed(1)+'% → '+mipRate+'%).');
+  }
+  sug.push('MIP duration at '+mipLTV.toFixed(1)+'% LTV (orig. value): <b>'+(mipLTV<=90?'cancels after 11 years':'life of loan')+'</b>.');
+  const suggBox='<div class="sugg"><div class="sugg-h">LO Suggestions</div><ul>'+sug.map(s=>'<li>'+s+'</li>').join('')+'</ul></div>';
+  const curComb=c.rate+(c.curMI>0&&c.bal>0?c.curMI*12/c.bal*100:0);
+  const ntb=curComb-(c.nrate+mipRate);
+  const eligible=new Date(Math.max(addDays(c.close,210), addMonths(c.firstPay,6)));
+  const seasonOK=c.nclose>=eligible&&c.made>=6;
+  const maxNTBRate=curComb-0.5-mipRate;
+  let checks='';
+  checks+= seasonOK? pill(true,'Seasoning passed')
+    : pill(false,'Seasoning fails — earliest closing '+fmtDate(eligible)+'. Needs 210 days from prior closing + 6 payments made.');
+  /* NTB: term cut ≥ 3 yrs uses the reduction-in-term test (ML — FHA cases on/after 1/24/2022);
+     otherwise the standard 0.5% combined-rate drop applies */
+  const termCut=c.remaining-c.nterm;
+  const newComb=c.nrate+mipRate, newPmtPIM=newPI+mMIP, curPmtPIM=c.curPI+c.curMI;
+  if(termCut>=36){
+    /* reduction-in-term: fixed → combined must be BELOW current; ARM → up to 2% above allowed. $50 pmt rule both. */
+    const okRate=c.arm? newComb<=curComb+2 : newComb<curComb;
+    const okPay=newPmtPIM<=curPmtPIM+50;
+    checks+= (okRate&&okPay)
+      ? pill(true,'NTB passed — term reduction: '+(termCut/12).toFixed(1)+' yrs shorter, P&I+MIP within $50, combined rate '+(c.arm?'within 2% above (ARM)':'below current'))
+      : pill(false,'NTB fails on term-reduction test — '+(!okPay?'P&I+MIP rises '+fmt$(newPmtPIM-curPmtPIM)+' (max allowed increase $50)':c.arm?'new combined rate is more than 2% above current ('+fmtPct(newComb)+' vs '+fmtPct(curComb)+')':'new combined rate must be below current ('+fmtPct(newComb)+' vs '+fmtPct(curComb)+')'));
+  } else if(c.arm){
+    /* ARM → fixed: new combined rate may be up to 2% ABOVE the current combined rate */
+    checks+= newComb<=curComb+2
+      ? pill(true,'NTB passed — ARM→fixed: combined rate '+fmtPct(newComb)+' is within 2% above current '+fmtPct(curComb))
+      : pill(false,'NTB fails — ARM→fixed allows at most 2% above current combined rate ('+fmtPct(newComb)+' vs '+fmtPct(curComb)+').');
+  } else {
+    checks+= ntb>=0.5? pill(true,'NTB passed')
+      : pill(false,'NTB fails — combined rate must drop ≥ 0.5%. New rate needs to be ≤ '+fmtPct(maxNTBRate)+'.'+(termCut>0?' (Term cut of '+(termCut/12).toFixed(1)+' yrs is under the 3-yr minimum for the term-reduction test.)':''));
+  }
+  if(c.balMissing) checks+=pill(false,'MISSING: statement balance — ARM, the amortized estimate is invalid.');
+  if(capped) checks+=pill(false,'Capped at original balance — borrower covers '+fmt$(trueShort)+' payoff shortfall at closing.');
+  if(statedPay>0) checks+= impliedEsc>=0
+    ? pill(null,'Current payment set from statement ('+fmt$(statedPay)+'). Implied escrow '+fmt$(impliedEsc)+'/mo — includes any shortage spread.')
+    : pill(false,'Statement payment '+fmt$(statedPay)+' is LESS than P&I + MIP ('+fmt$(c.curPI+c.curMI)+') — check rate, term or MIP inputs.');
+  else checks+=pill(false,'MISSING: current total payment — pull it from the statement or credit report.');
+  if(c.oamtMissing) checks+=pill(false,'MISSING: original loan amount. Last loan was a refi, so enter “Original total loan (override)” from the statement.');
+  if(!c.fee.title) checks+=pill(false,'MISSING: title fees. Get a title quote and enter it — every number below it is off until you do.');
+  if(cashDue>newTotPay+2){
+    const needYSP=c.fee.ysp+(cashDue-newTotPay)/c.payoff*100;
+    checks+=pill(false,'RESTRUCTURE: cash to close ('+fmt$(cashDue)+') is more than one payment ('+fmt$2(newTotPay)+'). Look for a higher rate with about '+needYSP.toFixed(2)+'% YSP (now '+c.fee.ysp+'%). If no rate works, click the acknowledge button under Funds Due.');
+  }
+  if(old) checks+=pill(true,'Pre-6/2009: 0.01% UF / 0.55% MIP');
+  sheetOut('New — FHA Streamline', body.h, checks, suggBox,
+    `Signs ${fmtDate(c.nclose)}, funds ${fmtDate(c.fund)} after rescission. Payoff carries ${c.pdays} days of interest${c.holding?' (incl. held payment month)':''}; prepaid interest ${c.prepDays} days. ${mipEst?'Current MIP estimated @ '+curMIPrate+'% ('+fmtDate(c.close).slice(-4)+' era, LTV '+origLTV.toFixed(1)+'%) = '+fmt$2(c.curMI)+' — confirm on statement. ':''}UFMIP refund: month ${ufmipRefundMonths(c.close,c.fund)} of 36 (calendar months to funding, per lender worksheet) → ${refPct}% = ${fmt$(refund)}, netted vs new UFMIP. Max base: lesser of [UPB + interest due (≤2 mo) + MIP due − refund] and [original loan − refund], rounded down; 1.75% UFMIP on that base. Costs never financeable. Late charges/escrow shortages assumed $0 — add to payoff if the statement shows any. Est. bal ${fmt$(c.estBal)} after ${c.made} pmts. MIP ${mipLTV<=90?'cancels after 11 yrs':'life of loan'} at this LTV.`);
+}
+function renderConv(){
+  const c=baseCalc('conv');
+  const finCosts=gv('conv_fincosts',true), escFin=finCosts; /* financing costs finances the escrow deposit too */
+  const loan=c.payoff+(finCosts?c.costs:0)+(escFin&&!c.waive?c.esc.deposit:0);
+  const pmi=gv('conv_pmi',0);
+  const ntype=gv('conv_ntype','fixed');
+  if(ntype!=='fixed'){ c.nterm=360; c.newArm={label:ntype, years:parseInt(ntype)}; }
+  c.prepaidInt=loan*(c.nrate/100)/365*c.prepDays;
+  const newPI=pmt(loan,c.nrate,c.nterm);
+  const val=gv('conv_value',0);
+  const ltv=val>0?loan/val*100:NaN;
+  const extra=srow('b_loan','New Loan Amount', null, fmt$(loan), {defHide:true})
+    +srow('b_ltv','Loan-to-Value', null, isFinite(ltv)?ltv.toFixed(1)+'%':'REQUIRED', {missing:!val, sub:val?'':'enter estimated home value'});
+  const body=compareBody(c,newPI,pmi,'PMI',loan, feeRows(c,extra));
+  const drop=c.rate-c.nrate;
+  let checks=pill(drop>0,'Rate drop '+fmtPct(drop))
+    +pill(null,'Verify AUS, LTV for pricing/PMI, cash-back ≤ lesser of 2% / $2,000');
+  if(!val) checks+=pill(false,'MISSING: estimated home value — LTV drives pricing and PMI. Enter it.');
+  if(c.balMissing) checks+=pill(false,'MISSING: statement balance — ARM, the amortized estimate is invalid.');
+  if(c.arm&&!c.newArm) checks+=pill(null,'ARM exit — current side assumes today’s rate holds. Sell the certainty: their rate can move again, the new one can’t.');
+  if(c.newArm) checks+=pill(null,'New loan is a '+c.newArm.label+' ARM — payment quoted at the initial rate, adjusts after '+c.newArm.years+' yrs. Confirm caps/margin from pricing before quoting.');
+  sheetOut('New — Conventional', body.h, checks, '',
+    `Signs ${fmtDate(c.nclose)}, funds ${fmtDate(c.fund)} after rescission; payoff carries ${c.pdays} days interest${c.holding?' (held payment)':''}. Est. bal ${fmt$(c.estBal)} after ${c.made} pmts. If dropping PMI, confirm LTV with AVM/appraisal.`);
+}
+function renderDC(){
+  const c=baseCalc('dc'); const t=S.dcType;
+  const debts=S.debts.filter(d=>d.bal>0||d.pay>0);
+  const debtBal=debts.reduce((s,d)=>s+d.bal,0), debtPay=debts.reduce((s,d)=>s+d.pay,0);
+  const escFin=gv('dc_escfin',true);
+  let loan=c.payoff+debtBal+c.costs+(escFin&&!c.waive?c.esc.deposit:0);
+  let feeExtra='', mi=0, miLbl='Mortgage Insurance';
+  if(t==='va'){ const ex=gv('dc_exempt',false); const fr=ex?0:parseFloat(gv('dc_use','2.15'))/100;
+    const ff=loan*fr/(1-fr); loan+=ff;
+    feeExtra=srow('b_ff', ex?'VA Funding Fee — WAIVED':'VA Funding Fee ('+gv('dc_use','2.15')+'%)', null, fmt$(ff), {neuCls:ex?'save':''});
+  }
+  if(t==='fha'){ const uf=loan*0.0175/(1-0.0175); loan+=uf;
+    feeExtra=srow('b_uf','FHA UFMIP (1.75%)', null, fmt$(uf));
+    mi=loan*parseFloat(gv('dc_miprate','0.55'))/100/12; miLbl='Monthly MIP'; }
+  /* conventional cash-out: 80% LTV cap means no PMI */
+  const value=gv('dc_value',0), maxLtv=gv('dc_maxltv',t==='va'?90:80);
+  const ltv=value>0?loan/value*100:NaN, maxLoan=value*maxLtv/100;
+  const ntype=gv('dc_ntype','fixed');
+  if(ntype!=='fixed'){ c.nterm=360; c.newArm={label:ntype, years:parseInt(ntype)}; }
+  c.prepaidInt=loan*(c.nrate/100)/365*c.prepDays;
+  const newPI=pmt(loan,c.nrate,c.nterm);
+  const newTot=newPI+mi+c.esc.monthly;
+  const curMtg=c.curPI+c.curMI+c.curEsc;
+  const oldTot=curMtg+debtPay;
+  const save=oldTot-newTot;
+  let h='';
+  h+=sect('Debts being paid off');
+  debts.forEach((d,i)=>{ h+=srow('d_'+i, d.name||('Debt '+(i+1)), fmt$2(d.pay)+'<span class="mini">/mo</span>', fmt$(d.bal), {sub:'payment · balance'}); });
+  h+=srow('d_mtg','Current Mortgage (PITI)', fmt$2(curMtg), fmt$(c.payoff), {sub:'payment · payoff'});
+  h+=srow('d_tot','Total Obligations Today', fmt$2(oldTot)+'<span class="mini">/mo</span>', fmt$(debtBal+c.payoff), {curCls:'bad'});
+  h+=`<div class="gap"></div>`;
+  h+=sect('One new payment');
+  h+=srow('rate','Rate', fmtPct(c.rate), fmtPct(c.nrate));
+  if(c.newArm) h+=srow('n_armtype','New Loan Type', null, c.newArm.label+' ARM', {sub:'fixed '+c.newArm.years+' yrs · 30-yr amortization · adjusts after'});
+  h+=srow('pi','P & I', null, fmt$2(newPI));
+  h+=srow('mi', miLbl, null, mi?fmt$2(mi):'—', {defHide:mi===0});
+  h+=srow('esc','Escrow (T&I)', null, c.waive?'waived':fmt$2(c.esc.monthly), {defHide:c.waive});
+  h+=srow('tot','New Total Payment', fmt$2(oldTot), fmt$2(newTot), {neuCls:'save', sub:'old vs new'});
+  h+=srow('msave','Monthly Savings', null, fmt$2(save), {neuCls:save>=0?'save':'bad'});
+  h+=srow('ysave','Annual Savings', null, fmt$(save*12), {neuCls:save>=0?'save':'bad'});
+  h+=`<div class="gap"></div>`;
+  h+=feeRows(c, feeExtra + srow('b_debts','Debts Paid at Closing', null, fmt$(debtBal))
+    + srow('b_loan','New Loan Amount', null, fmt$(loan), {defHide:true})
+    + srow('b_ltv','Loan-to-Value', null, isFinite(ltv)?ltv.toFixed(1)+'%':'—', {neuCls:isFinite(ltv)&&ltv<=maxLtv?'save':'bad', sub:'max '+maxLtv+'% → '+fmt$(maxLoan)}));
+  let checks=pill(isFinite(ltv)&&ltv<=maxLtv,'LTV '+(isFinite(ltv)?ltv.toFixed(1):'—')+'% vs '+maxLtv+'% cap')
+    +(t==='va'?pill(c.nclose>=addDays(c.firstPay,210),'VA seasoning 210d / 6 pmts')+pill(null,'Asked about disability exemption?'):'')
+    +(t==='fha'?pill(c.made>=12,'FHA cash-out: 12-mo ownership & 0x30'):'')
+    +pill(null,'Debts must pay at closing for DTI exclusion');
+  if(c.balMissing) checks+=pill(false,'MISSING: statement balance — ARM, the amortized estimate is invalid.');
+  if(c.newArm) checks+=pill(null,'New loan is a '+c.newArm.label+' ARM — quoted at initial rate, adjusts after '+c.newArm.years+' yrs. Confirm caps/margin from pricing.');
+  sheetOut('New — '+t.toUpperCase()+' Cash-Out', h, checks, '',
+    `Est. mortgage bal ${fmt$(c.estBal)} after ${c.made} pmts. ${t==='conv'?'Conv cash-out: 80% LTV primary, 6-mo seasoning (Fannie).':''}${t==='va'?'Full underwrite + NTB; fee financed on top.':''}${t==='fha'?'MIP life-of-loan if LTV>90%.':''}`);
+}
+
+/* ---------- render + events ---------- */
+function render(){ document.body.classList.toggle('showmore',S.showMore); ({va:renderVA,fha:renderFHA,conv:renderConv,dc:renderDC})[S.product](); }
+function full(){ renderInputs(); render(); }
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='bor_name'||t.id==='bor_addr'||t.id==='bor_zip'||t.id==='bor_fico'){
+    S.borrower[{bor_name:'name',bor_addr:'addr',bor_zip:'zip',bor_fico:'fico'}[t.id]]=t.value; render(); return; }
+  if(t.dataset.d!==undefined && t.dataset.i!==undefined){
+    const d=S.debts[+t.dataset.i];
+    if(t.dataset.d==='name') d.name=t.value; else d[t.dataset.d==='bal'?'bal':'pay']=parseFloat(t.value.replace(/[,$\s]/g,''))||0;
+    render(); return; }
+  if(t.id==='dc_type'){ S.dcType=t.value; full(); return; }
+  if(t.id.endsWith('_taxfreq')) syncTaxRows();
+  if(t.id==='fha_ptype'||t.id==='conv_ptype'||t.id==='va_ptype') syncFhaRows();
+  if(t.closest('#inputs')) render();
+});
+/* pretty-format numbers when the LO leaves a field: commas on dollars, % on rates */
+document.addEventListener('focusout',e=>{
+  const t=e.target;
+  if(!t||t.tagName!=='INPUT') return;
+  if(t.type==='date'||t.type==='checkbox') return;
+  if(t.id==='bor_name'||t.id==='bor_addr'||t.id==='bor_zip'||t.id==='bor_fico') return;
+  if(t.dataset.d==='name') return;
+  const raw=String(t.value).replace(/[,$%\s]/g,'');
+  if(raw===''||!isFinite(parseFloat(raw))) return;
+  const n=parseFloat(raw);
+  if(/_(rate|nrate|pts|ysp|comp|dp|maxltv)$/.test(t.id)) t.value=n+'%';
+  else if(/_pdays$/.test(t.id)) t.value=n;
+  else t.value=n.toLocaleString('en-US',{maximumFractionDigits:2});
+});
+document.addEventListener('click',e=>{
+  const tgl=e.target.closest('[data-tgl]');
+  if(tgl){ S[tgl.dataset.tgl]=!S[tgl.dataset.tgl]; render(); return; }
+  const eye=e.target.closest('[data-eye]');
+  if(eye){ S.hidden[eye.dataset.eye]=!S.hidden[eye.dataset.eye]; render(); return; }
+  const del=e.target.closest('[data-del]');
+  if(del){ S.debts.splice(+del.dataset.del,1); full(); return; }
+  if(e.target.id==='addDebt'){ S.debts.push({name:'',bal:0,pay:0}); full(); return; }
+  const tab=e.target.closest('#tabs button');
+  if(tab){ S.product=tab.dataset.p; document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b===tab)); full(); return; }
+  if(e.target.id==='loBtn'||e.target.id==='clBtn'){
+    S.client=e.target.id==='clBtn';
+    document.body.classList.toggle('client',S.client);
+    $('#loBtn').classList.toggle('on',!S.client); $('#clBtn').classList.toggle('on',S.client);
+    render();
+  }
+});
+full();
+</script>
