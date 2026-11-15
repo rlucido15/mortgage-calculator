@@ -286,13 +286,14 @@ document.addEventListener('keydown',e=>{ const ov=document.getElementById('mxMod
    Only numbers cross the frame boundary — never any client or loan data. */
 const EMB=window.parent!==window;
 const VIEW={top:0,vh:window.innerHeight};
+let HOST=false; /* true once a host page that sizes the frame (our embed snippet) starts talking to us */
 function mxScrollTo(el){
-  if(!EMB){ if(el) el.scrollIntoView({block:'center',behavior:'smooth'}); else window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(!EMB||!HOST){ if(el) el.scrollIntoView({block:'center',behavior:'smooth'}); else window.scrollTo({top:0,behavior:'smooth'}); return; }
   const y=el?Math.max(0,el.getBoundingClientRect().top+window.scrollY-Math.round(VIEW.vh*0.4)):0;
   window.parent.postMessage({mxLo:'scrollTo',y:y},'*');
 }
 function pinBar(){
-  const bar=document.getElementById('mxBar'); if(!EMB||!bar) return;
+  const bar=document.getElementById('mxBar'); if(!EMB||!HOST||!bar) return;
   if(window.matchMedia('(max-width:760px)').matches){ bar.style.transform=''; return; }
   bar.style.transform='';
   const natural=bar.getBoundingClientRect().top+window.scrollY;
@@ -308,7 +309,7 @@ if(EMB){
   const send=()=>{ const h=Math.ceil(document.documentElement.getBoundingClientRect().height); if(h!==lastH){ lastH=h; window.parent.postMessage({mxLo:'height',h:h},'*'); } };
   new ResizeObserver(send).observe(document.documentElement); send();
   window.addEventListener('message',e=>{ if(e.source!==window.parent||!e.data||typeof e.data!=='object') return;
-    const v=e.data.mxLoView; if(v&&typeof v.top==='number'&&typeof v.vh==='number'&&v.vh>200&&v.vh<5000&&v.top>=0&&v.top<50000){ VIEW.top=v.top; VIEW.vh=v.vh; pinBar(); placeModal(); } });
+    const v=e.data.mxLoView; if(v&&typeof v.top==='number'&&typeof v.vh==='number'&&v.vh>200&&v.vh<5000&&v.top>=0&&v.top<50000){ if(!HOST){ HOST=true; document.documentElement.classList.add('mx-hosted'); } VIEW.top=v.top; VIEW.vh=v.vh; pinBar(); placeModal(); } });
   window.parent.postMessage({mxLo:'ready'},'*');
 }
 

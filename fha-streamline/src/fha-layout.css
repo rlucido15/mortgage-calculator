@@ -412,10 +412,10 @@ header.app{justify-content:flex-start}
 
 /* ---- embedded in a web page: the host scrolls, so the bar is pinned by script and the pop-out sits in the visible area ---- */
 html.mx-embed body{padding-bottom:24px}
-html.mx-embed .mx-bar{position:relative; top:auto; will-change:transform}
-html.mx-embed .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
-html.mx-embed .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
-html.mx-embed body.mx-modal-open{overflow:visible}
+html.mx-hosted .mx-bar{position:relative; top:auto; will-change:transform}
+html.mx-hosted .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
+html.mx-hosted .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
+html.mx-hosted body.mx-modal-open{overflow:visible}
 
 /* ===================== Pass 6 (Nov 15): refined top sections ===================== */
 /* header: slimmer, calmer, with a quiet meta line on the right */

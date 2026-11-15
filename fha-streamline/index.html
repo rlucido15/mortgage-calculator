@@ -661,10 +661,10 @@ header.app{justify-content:flex-start}
 
 /* ---- embedded in a web page: the host scrolls, so the bar is pinned by script and the pop-out sits in the visible area ---- */
 html.mx-embed body{padding-bottom:24px}
-html.mx-embed .mx-bar{position:relative; top:auto; will-change:transform}
-html.mx-embed .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
-html.mx-embed .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
-html.mx-embed body.mx-modal-open{overflow:visible}
+html.mx-hosted .mx-bar{position:relative; top:auto; will-change:transform}
+html.mx-hosted .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
+html.mx-hosted .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
+html.mx-hosted body.mx-modal-open{overflow:visible}
 
 /* ===================== Pass 6 (Nov 15): refined top sections ===================== */
 /* header: slimmer, calmer, with a quiet meta line on the right */
@@ -1918,13 +1918,14 @@ document.addEventListener('keydown',e=>{ const ov=document.getElementById('mxMod
    Only numbers cross the frame boundary — never any client or loan data. */
 const EMB=window.parent!==window;
 const VIEW={top:0,vh:window.innerHeight};
+let HOST=false; /* true once a host page that sizes the frame (our embed snippet) starts talking to us */
 function mxScrollTo(el){
-  if(!EMB){ if(el) el.scrollIntoView({block:'center',behavior:'smooth'}); else window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(!EMB||!HOST){ if(el) el.scrollIntoView({block:'center',behavior:'smooth'}); else window.scrollTo({top:0,behavior:'smooth'}); return; }
   const y=el?Math.max(0,el.getBoundingClientRect().top+window.scrollY-Math.round(VIEW.vh*0.4)):0;
   window.parent.postMessage({mxLo:'scrollTo',y:y},'*');
 }
 function pinBar(){
-  const bar=document.getElementById('mxBar'); if(!EMB||!bar) return;
+  const bar=document.getElementById('mxBar'); if(!EMB||!HOST||!bar) return;
   if(window.matchMedia('(max-width:760px)').matches){ bar.style.transform=''; return; }
   bar.style.transform='';
   const natural=bar.getBoundingClientRect().top+window.scrollY;
@@ -1940,7 +1941,7 @@ if(EMB){
   const send=()=>{ const h=Math.ceil(document.documentElement.getBoundingClientRect().height); if(h!==lastH){ lastH=h; window.parent.postMessage({mxLo:'height',h:h},'*'); } };
   new ResizeObserver(send).observe(document.documentElement); send();
   window.addEventListener('message',e=>{ if(e.source!==window.parent||!e.data||typeof e.data!=='object') return;
-    const v=e.data.mxLoView; if(v&&typeof v.top==='number'&&typeof v.vh==='number'&&v.vh>200&&v.vh<5000&&v.top>=0&&v.top<50000){ VIEW.top=v.top; VIEW.vh=v.vh; pinBar(); placeModal(); } });
+    const v=e.data.mxLoView; if(v&&typeof v.top==='number'&&typeof v.vh==='number'&&v.vh>200&&v.vh<5000&&v.top>=0&&v.top<50000){ if(!HOST){ HOST=true; document.documentElement.classList.add('mx-hosted'); } VIEW.top=v.top; VIEW.vh=v.vh; pinBar(); placeModal(); } });
   window.parent.postMessage({mxLo:'ready'},'*');
 }
 
