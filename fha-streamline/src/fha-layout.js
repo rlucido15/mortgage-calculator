@@ -27,7 +27,7 @@ function arrange(){
   const box=document.getElementById('inputs'); if(!box||!document.getElementById('fha_close')||q('.mx-ess',box)) return;
   const open={}; /* nothing to restore on first build */
   const ess=document.createElement('section'); ess.className='mx-ess'; ess.setAttribute('aria-label','Essentials');
-  ess.innerHTML='<p class="mx-ess-h">Essentials</p><div class="card mx-esscard"><h2>Current loan</h2><div class="body" id="mxEssCur"></div></div><div class="card mx-esscard"><h2>New loan</h2><div class="body" id="mxEssNew"></div></div>';
+  ess.innerHTML='<div class="card mx-esscard"><h2>Current loan</h2><div class="body" id="mxEssCur"></div></div><div class="card mx-esscard"><h2>New loan</h2><div class="body" id="mxEssNew"></div></div>';
   const fill=(list,dest)=>list.forEach(([id,lbl])=>{ const r=rowOf(id); if(!r) return; r.classList.add('mx-essrow'); const l=r.querySelector('label'); if(l) l.textContent=lbl; dest.appendChild(r);
     if(id==='fha_curpay'){ const slot=document.getElementById('fha_reqslot'); if(slot) dest.appendChild(slot); } });
   fill(ESS_CUR,q('#mxEssCur',ess)); fill(ESS_NEW,q('#mxEssNew',ess));
@@ -155,10 +155,15 @@ function restructureSheet(){
     if(ZERO.includes(id)&&n.classList.contains('off')) n.classList.add('mx-zero');
     if(id==='b_loan'){ n.classList.remove('off'); }
     ds.appendChild(n); });
-  const sm=q('[data-tgl="showMore"]',ds); if(sm){ sm.textContent='View max loan calc ⤢'; sm.setAttribute('aria-haspopup','dialog'); }
+  const sm=q('[data-tgl="showMore"]',ds); if(sm){ sm.innerHTML='<span class="mx-bi" aria-hidden="true">⤢</span>View Max Loan Calc'; sm.setAttribute('aria-haspopup','dialog'); sm.classList.add('mx-pbtn'); }
+  /* long notes under a row become an ⓘ tooltip (same text) */
+  ['b_escprep','b_effcomp'].forEach(id=>{ const b=q(`.srow > .eye[data-eye="fha:${id}"]`,ds), sb=b&&q('.lblc .sub',b.parentElement);
+    if(sb){ const t=sb.textContent.trim(); const tip=document.createElement('button'); tip.type='button'; tip.className='mx-tip'; tip.setAttribute('aria-label',t); tip.dataset.tip=t; tip.textContent='i'; sb.replaceWith(tip); } });
+  const cr=q('[data-tgl="fhaBring"]',ds); if(cr){ const sb=q('.lblc .sub',cr.closest('.srow')); if(sb) sb.remove(); }
   panel.prepend(ds);
-  const note=q('.note',panel); if(note){ const d=document.createElement('details'); d.className='mx-assume'; if(window.__mxAssumeOpen) d.open=true;
-    d.innerHTML='<summary>Assumptions</summary>'; note.replaceWith(d); d.appendChild(note); d.addEventListener('toggle',()=>{ window.__mxAssumeOpen=d.open; }); }
+  /* assumptions: a button that opens the same pop-out window */
+  const note=q('.note',panel); if(note){ window.__mxNote=note.textContent.trim(); const w=document.createElement('div'); w.className='mx-assume';
+    w.innerHTML='<button type="button" class="mx-pbtn" data-mx-assume aria-haspopup="dialog"><span class="mx-bi" aria-hidden="true">≡</span>View Assumptions</button>'; note.replaceWith(w); }
 }
 
 /* ---------- 1. verdict strip ---------- */
@@ -215,7 +220,8 @@ function verdict(){
   const sg=(term||facts.length)?`<div class="mx-sg"><p class="mx-grp-h">LO suggestions</p>${term}${facts.length?`<ul class="mx-facts">${facts.map(t=>`<li>${escT(t)}</li>`).join('')}</ul>`:''}</div>`:'';
   dr.innerHTML=`<div class="mx-ckcol"><p class="mx-grp-h">Needs attention${open.length?' · '+open.length:''}</p>${list}</div>${sg}`;
   const ab=window.__mxAckBtn;
-  if(ab){ const host=qa('.mx-ck',dr).find(li=>/Restructure/.test(li.textContent)); if(host) host.appendChild(ab); else { const ul=q('.mx-cklist',dr)||q('.mx-ckcol',dr); const li=document.createElement('li'); li.className='mx-ck warn'; li.appendChild(ab); ul.appendChild(li); } }
+  if(ab){ const on=ab.classList.contains('on'); ab.innerHTML=on?'<b>✓ Acknowledged</b><span>More than 1 payment</span>':'<b>Acknowledge</b><span>More than 1 payment</span>'; ab.classList.add('mx-ack2'); ab.style.width='';
+    const host=qa('.mx-ck',dr).find(li=>/Restructure/.test(li.textContent)); if(host) host.appendChild(ab); else { const ul=q('.mx-cklist',dr)||q('.mx-ckcol',dr); const li=document.createElement('li'); li.className='mx-ck warn'; li.appendChild(ab); ul.appendChild(li); } }
   /* the panel's own suggestions box is no longer needed */
   const sb=q('#results .lopanel .sugg'); if(sb) sb.remove();
 }
@@ -234,19 +240,40 @@ function openMaxLoan(){
     const vb=[...r.children].filter(c=>c.classList.contains('vbox')&&!c.classList.contains('blank')&&!c.classList.contains('dcell')).pop();
     const val=vb?vb.textContent.trim():''; const bad=vb&&vb.classList.contains('bad'), good=vb&&vb.classList.contains('save');
     return {id,lab,sub,val,bad,good}; }).filter(x=>x.lab&&!((x.id==='b_short'||x.id==='b_excess'||x.id==='b_bpcomp')&&/^\$0$/.test(x.val)));
+  openPop('Max loan calculation','How the new loan amount is built, step by step.',
+    `<ol class="mx-steps">${items.map(x=>`<li class="${RESULT.includes(x.id)?'res':''} ${x.bad?'bad':''}"><div><b>${escT(x.lab)}</b>${x.sub?`<span>${escT(x.sub)}</span>`:''}</div><em class="${x.good?'good':''}">${escT(x.val)}</em></li>`).join('')}</ol>`);
+}
+function openAssumptions(){
+  const t=window.__mxNote||''; if(!t) return;
+  const parts=t.split(/(?<=\.)\s+(?=[A-Z])/).map(x=>x.trim()).filter(Boolean);
+  openPop('Assumptions','What this worksheet assumes. Confirm these against the statement and the lender worksheet.',
+    `<ul class="mx-alist">${parts.map(x=>`<li>${escT(x)}</li>`).join('')}</ul>`);
+}
+function openPop(title,sub,body){
   let ov=document.getElementById('mxModal');
   if(!ov){ ov=document.createElement('div'); ov.id='mxModal'; ov.className='mx-modal'; document.body.appendChild(ov);
     ov.addEventListener('click',e=>{ if(e.target===ov||e.target.closest('[data-mx-close]')) closeMaxLoan(); }); }
   ov.innerHTML=`<div class="mx-dlg" role="dialog" aria-modal="true" aria-labelledby="mxDlgT">
-    <div class="mx-dlg-h"><div><p class="k">FHA Streamline</p><h2 id="mxDlgT">Max loan calculation</h2><p class="s">How the new loan amount is built, step by step.</p></div>
+    <div class="mx-dlg-h"><div><p class="k">FHA Streamline</p><h2 id="mxDlgT">${escT(title)}</h2><p class="s">${escT(sub)}</p></div>
     <button type="button" class="mx-x" data-mx-close aria-label="Close">✕</button></div>
-    <ol class="mx-steps">${items.map(x=>`<li class="${RESULT.includes(x.id)?'res':''} ${x.bad?'bad':''}"><div><b>${escT(x.lab)}</b>${x.sub?`<span>${escT(x.sub)}</span>`:''}</div><em class="${x.good?'good':''}">${escT(x.val)}</em></li>`).join('')}</ol>
+    ${body}
     <div class="mx-dlg-f"><button type="button" class="mx-done" data-mx-close>Done</button></div></div>`;
   ov.hidden=false; document.body.classList.add('mx-modal-open');
   window.__mxLastFocus=document.activeElement; q('.mx-x',ov).focus();
 }
 function closeMaxLoan(){ const ov=document.getElementById('mxModal'); if(!ov||ov.hidden) return; ov.hidden=true; document.body.classList.remove('mx-modal-open'); if(window.__mxLastFocus) window.__mxLastFocus.focus(); }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-tgl="showMore"]'); if(!b) return; e.preventDefault(); e.stopImmediatePropagation(); openMaxLoan(); },true);
+document.addEventListener('click',e=>{ if(e.target.closest('[data-mx-assume]')) openAssumptions(); });
+/* ⓘ tooltips: drawn at page level so the panel edge never cuts them off */
+function tipShow(t){ tipHide(); const b=document.createElement('div'); b.className='mx-tipbox'; b.id='mxTipBox'; b.setAttribute('role','tooltip'); b.textContent=t.dataset.tip; document.body.appendChild(b);
+  const r=t.getBoundingClientRect(), w=b.offsetWidth, h=b.offsetHeight; let x=r.left+r.width/2-w/2; x=Math.max(8,Math.min(x,document.documentElement.clientWidth-w-8));
+  let y=r.top-h-8; if(y<8) y=r.bottom+8; b.style.left=(x+window.scrollX)+'px'; b.style.top=(y+window.scrollY)+'px'; t.setAttribute('aria-describedby','mxTipBox'); }
+function tipHide(){ const b=document.getElementById('mxTipBox'); if(b) b.remove(); }
+document.addEventListener('mouseover',e=>{ const t=e.target.closest('.mx-tip'); if(t) tipShow(t); });
+document.addEventListener('mouseout',e=>{ if(e.target.closest('.mx-tip')) tipHide(); });
+document.addEventListener('focusin',e=>{ const t=e.target.closest('.mx-tip'); if(t) tipShow(t); });
+document.addEventListener('focusout',e=>{ if(e.target.closest('.mx-tip')) tipHide(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') tipHide(); });
 document.addEventListener('keydown',e=>{ const ov=document.getElementById('mxModal'); if(!ov||ov.hidden) return;
   if(e.key==='Escape'){ e.preventDefault(); closeMaxLoan(); }
   if(e.key==='Tab'){ const f=qa('button',ov); if(!f.length) return; const i=f.indexOf(document.activeElement); if(e.shiftKey&&i<=0){ e.preventDefault(); f[f.length-1].focus(); } else if(!e.shiftKey&&i===f.length-1){ e.preventDefault(); f[0].focus(); } } });

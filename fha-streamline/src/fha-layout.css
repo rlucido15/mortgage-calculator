@@ -478,3 +478,49 @@ header.app{padding:14px 22px; border-radius:16px; justify-content:space-between;
 .mx-bar .mx-vt.fail, .mx-bar .mx-vt.hero.neg, .mx-bar .mx-vt.rev, .mx-bar .mx-vt.rev.warnonly{box-shadow:none !important; border-top:0; border-right:0; border-bottom:0}
 .mx-ck .ackbtn, .mx-ck:has(.ackbtn) .ackbtn{width:auto !important; justify-self:start; margin-top:6px}
 .mx-bar .mx-vt + .mx-vt.fail, .mx-bar .mx-vt + .mx-vt.rev, .mx-bar .mx-vt + .mx-vt.hero.neg{border-left:1px solid #0B2034}
+
+/* ===================== Pass 7 (Nov 15) ===================== */
+/* needs attention = peach glass (verdict tiles and the Missing / Restructure rows) */
+.mx-bar .mx-vt.fail, .mx-bar .mx-vt.hero.neg, .mx-bar .mx-vt.rev.fail{
+  background:linear-gradient(140deg,rgba(255,228,216,.94) 0%,rgba(254,240,235,.82) 55%,rgba(255,214,198,.88) 100%) !important;
+  -webkit-backdrop-filter:blur(12px) saturate(160%); backdrop-filter:blur(12px) saturate(160%);
+  border:1px solid rgba(255,255,255,.65) !important; border-radius:12px; margin:6px 4px !important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 0 -1px 0 rgba(244,103,68,.25), 0 8px 22px rgba(244,103,68,.22) !important; color:var(--navy)}
+.mx-bar .mx-vt.fail::before, .mx-bar .mx-vt.hero.neg::before, .mx-bar .mx-vt.rev.fail::before{display:none}
+.mx-bar .mx-vt.fail .k, .mx-bar .mx-vt.hero.neg .k, .mx-bar .mx-vt.rev.fail .k{color:#9A3F1E}
+.mx-bar .mx-vt.fail .big, .mx-bar .mx-vt.hero.neg .big, .mx-bar .mx-vt.rev.fail .big{color:#0E2A47}
+.mx-bar .mx-vt.fail .s, .mx-bar .mx-vt.hero.neg .s, .mx-bar .mx-vt.rev.fail .s{color:#5A3A30}
+.mx-bar .mx-vt.rev.fail .mx-chev{color:#F46744}
+.mx-bar .mx-vt + .mx-vt.fail, .mx-bar .mx-vt + .mx-vt.rev.fail, .mx-bar .mx-vt + .mx-vt.hero.neg{border-left:1px solid rgba(255,255,255,.65) !important}
+.mx-bar .mx-vt.fail + .mx-vt{border-left-color:transparent}
+.mx-ck.fail{background:linear-gradient(140deg,rgba(255,228,216,.95),rgba(254,240,235,.86)) !important; -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  color:var(--navy) !important; box-shadow:inset 0 1px 0 rgba(255,255,255,.85), inset 3px 0 0 #F46744, 0 6px 16px rgba(244,103,68,.18) !important; border:1px solid rgba(255,255,255,.55)}
+.mx-ck.fail .tag{color:#9A3F1E !important; border-color:#F46744 !important; background:rgba(255,255,255,.55) !important}
+.mx-ck.fail .go{color:#0E2A47; text-decoration:underline; text-decoration-color:#F46744; text-underline-offset:2px}
+/* acknowledge: a two-line button in the same column as "Go to field" */
+.mx-ck .ackbtn.mx-ack2, .mx-ck:has(.ackbtn) .ackbtn.mx-ack2{grid-column:3 !important; grid-row:1; justify-self:end; align-self:start; margin:0 !important; width:auto !important;
+  display:flex; flex-direction:column; align-items:center; gap:0; padding:6px 12px; min-height:0; border-radius:9px; line-height:1.2; text-align:center;
+  background:#fff; border:1.5px solid #F46744; color:#9A3F1E; box-shadow:0 2px 6px rgba(244,103,68,.18)}
+.mx-ack2 b{font:800 12.5px var(--font-body)} .mx-ack2 span{font:600 10.5px var(--font-body); color:#5A3A30}
+.mx-ck .ackbtn.mx-ack2:hover{background:#FFF6F2}
+.mx-ck .ackbtn.mx-ack2.on{background:#EAF3F6; border-color:#9BD3DF; color:#127C8F; box-shadow:none} .mx-ack2.on span{color:#4A5868}
+.mx-ck.warn .ackbtn.mx-ack2{background:#fff}
+/* deal panel: clear buttons + tooltips */
+.mx-pbtn{display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:42px; margin:0; padding:0 14px; border-radius:10px;
+  border:1.5px solid #0E2A47 !important; background:#fff; color:#0E2A47 !important; font:700 13.5px var(--font-body) !important; cursor:pointer; box-shadow:0 1px 0 rgba(14,42,71,.08)}
+.mx-pbtn:hover{background:#0E2A47; color:#fff !important} .mx-pbtn:focus-visible{outline:3px solid #1C97AE; outline-offset:2px}
+.mx-bi{font-size:15px; line-height:1}
+.mx-deal .showmore-row{padding-top:12px}
+.mx-assume{margin-top:12px; padding-top:12px; border-top:1px solid var(--line)}
+.mx-tip{position:relative; display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-left:6px; vertical-align:1px; border-radius:50%;
+  border:1.2px solid #8FA4B1; background:#fff; color:#4A5868; font:700 10px/1 Georgia,serif; font-style:italic; cursor:help; padding:0}
+.mx-tip:hover, .mx-tip:focus-visible{border-color:#1C97AE; color:#127C8F; outline:none}
+.mx-tip::after{content:attr(data-tip); position:absolute; z-index:50; right:-8px; bottom:calc(100% + 8px); width:240px; padding:9px 11px; border-radius:8px;
+  background:#0E2A47; color:#fff; font:500 12px/1.45 var(--font-body); font-style:normal; text-align:left; box-shadow:0 10px 24px rgba(0,0,0,.25);
+  opacity:0; visibility:hidden; transform:translateY(4px); transition:opacity .12s, transform .12s; pointer-events:none}
+.mx-tip:hover::after, .mx-tip:focus-visible::after{opacity:1; visibility:visible; transform:none}
+.mx-alist{margin:0; padding:10px 26px 6px 46px; display:flex; flex-direction:column; gap:10px; font-size:14.5px; line-height:1.5; color:var(--ink)}
+.mx-alist li::marker{color:#1C97AE}
+
+.mx-tip::after{display:none !important}
+.mx-tipbox{position:absolute; z-index:120; max-width:260px; padding:9px 11px; border-radius:8px; background:#0E2A47; color:#fff; font:500 12px/1.45 var(--font-body); box-shadow:0 10px 24px rgba(0,0,0,.3); pointer-events:none}
