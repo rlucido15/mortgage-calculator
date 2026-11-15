@@ -186,12 +186,12 @@ function verdict(){
   const items=checks.filter(c=>c.status!=='pass'&&!/^NTB|^Seasoning/.test(c.text)).concat(extra);
   const fails=items.filter(c=>c.status==='fail'), first=fails[0]||items[0];
   let rev;
-  if(!items.length) rev=`<div class="mx-vt pass"><p class="k">To review</p><p class="big">${ICON_OK}All clear</p><p class="s">No checks need attention.</p></div>`;
+  if(!items.length) rev=`<div class="mx-vt pass"><p class="k">Needs attention</p><p class="big">${ICON_OK}All clear</p><p class="s">Nothing to fix</p></div>`;
   else { const miss=/^MISSING:/.test(first.text);
     let short=first.text.replace(/^(RESTRUCTURE|MISSING):\s*/,'').split(/(?<=\.)\s/)[0].replace(/\.$/,'');
     if(miss) short='Missing: '+short.split(/\s[—-]\s/)[0]; short=short.charAt(0).toUpperCase()+short.slice(1);
     const f=first.field?[null,first.field]:FIELD_FOR.find(([re])=>/^MISSING/.test(first.text)&&re.test(first.text));
-    rev=`<button type="button" class="mx-vt rev ${fails.length?'fail':'warnonly'}" data-mx-rev="${f?f[1]:''}"><p class="k">${items.length} thing${items.length===1?'':'s'} to review</p><p class="big">${escT(short)}</p><p class="s"><b>${f?'Go to the field ›':'See all checks ›'}</b></p></button>`; }
+    rev=`<button type="button" class="mx-vt rev ${fails.length?'fail':'warnonly'}" data-mx-rev="${f?f[1]:''}" aria-label="${items.length} item${items.length===1?'':'s'} need attention. ${escT(short)}"><p class="k">Needs attention</p><p class="big">${items.length} item${items.length===1?'':'s'}</p><p class="s">${escT(short)}</p><span class="mx-chev" aria-hidden="true">›</span></button>`; }
   el.innerHTML=tile(ntb,'Net tangible benefit')+tile(sea,'Seasoning')+pay+funds+rev;
   /* every open check, full text, attached under the bar (scrolls away; the tiles stay pinned) */
   let dr=document.getElementById('mxChecks');
@@ -370,6 +370,7 @@ window.addEventListener('resize',()=>{ clearTimeout(window.__mxFit); window.__mx
 
 function tileNotes(){ qa('#results .mx-tiles > .srow').forEach(r=>{ const sb=q('.lblc .sub',r); if(sb){ const e=q(':scope > .eye',r)&&q(':scope > .eye',r).dataset.eye;
     if(/x_escref/.test(e||'')&&/ESTIMATE/i.test(sb.textContent)) sb.textContent='From the old servicer · estimate'; sb.classList.add('mx-tnote'); r.appendChild(sb); } }); }
+(function(){ const b=q('header.app'); if(b&&!q('.mx-hmeta',b)){ const m=document.createElement('p'); m.className='mx-hmeta'; m.innerHTML='Prepared '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'<span>Rates change daily</span>'; b.appendChild(m); } })();
 const _render=render; render=function(){ _render(); restructureSheet(); verdict(); summaries(); clientView(); tileNotes(); pinBar(); };
 arrange(); render();
 })();

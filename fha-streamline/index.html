@@ -665,6 +665,68 @@ html.mx-embed .mx-bar{position:relative; top:auto; will-change:transform}
 html.mx-embed .mx-modal{position:absolute; inset:auto 0 auto 0; top:var(--mx-vtop,0px); height:var(--mx-vh,100vh)}
 html.mx-embed .mx-dlg{max-height:calc(var(--mx-vh,100vh) - 40px)}
 html.mx-embed body.mx-modal-open{overflow:visible}
+
+/* ===================== Pass 6 (Nov 15): refined top sections ===================== */
+/* header: slimmer, calmer, with a quiet meta line on the right */
+header.app{padding:14px 22px; border-radius:16px; justify-content:space-between; background:linear-gradient(100deg,#0E2A47 0%,#0D4561 55%,#127C8F 100%); border:1px solid rgba(127,220,236,.18)}
+.brand{gap:14px} .brand .mx-wm{height:24px} .brand .mx-sep{background:rgba(255,255,255,.22)}
+.brand .mx-eb{font-size:10.5px; letter-spacing:.16em; color:#8FD3E2}
+.brand h1{font-size:20px; letter-spacing:0}
+.mx-hmeta{margin:0; text-align:right; font:600 12.5px var(--font-body); color:#E4EDF2}
+.mx-hmeta span{display:block; margin-top:1px; font-size:11.5px; font-weight:400; color:#8FD3E2}
+
+/* verdict bar: one even row of tiles, same rhythm in every tile */
+.mx-bar{border-radius:16px; padding:0; gap:0; background:#0B2034; border:1px solid rgba(127,220,236,.16); box-shadow:0 18px 40px rgba(0,0,0,.45)}
+.mx-bar > .mx-verdict{grid-template-columns:repeat(5,minmax(0,1fr))}
+.mx-vt{position:relative; margin:0 !important; padding:14px 18px 13px; border-radius:0; gap:3px; justify-content:flex-start; min-height:84px; box-shadow:none !important; background:transparent}
+.mx-vt + .mx-vt{border-left:1px solid rgba(255,255,255,.08)}
+.mx-vt:first-child{border-radius:15px 0 0 15px}
+.mx-vt .k{font:700 10.5px var(--font-head); letter-spacing:.14em; color:#8FB4C4}
+.mx-vt .big{font:800 21px/1.15 var(--font-head); color:#fff; letter-spacing:-.005em}
+.mx-vt .big svg{width:18px; height:18px}
+.mx-vt .s{font-size:12px; color:#9FB6C3; -webkit-line-clamp:1}
+.mx-vt.pass .big{color:#fff} .mx-vt.pass .big svg{color:#5FD0E4}
+.mx-vt.hero .big, .mx-vt.hero.neg .big{font-size:21px; color:#5FD0E4}
+/* needs attention: tinted tile with an orange edge (no boxes inside the band) */
+.mx-vt.fail, .mx-vt.hero.neg, .mx-vt.rev.fail{background:linear-gradient(180deg,rgba(244,103,68,.20),rgba(244,103,68,.10)) !important; color:#fff}
+.mx-vt.fail::before, .mx-vt.hero.neg::before, .mx-vt.rev::before{content:''; position:absolute; left:0; right:0; top:0; height:3px; background:#F46744}
+.mx-vt.rev.warnonly{background:rgba(249,165,143,.08) !important} .mx-vt.rev.warnonly::before{background:#F9A58F}
+.mx-vt.fail .k, .mx-vt.hero.neg .k, .mx-vt.rev .k{color:#FFB39E}
+.mx-vt.fail .big, .mx-vt.hero.neg .big, .mx-vt.rev .big{color:#fff; font-family:var(--font-head); font-size:21px; font-weight:800}
+.mx-vt.fail .s, .mx-vt.hero.neg .s, .mx-vt.rev .s{color:#F3D3C8}
+.mx-vt.rev{cursor:pointer; text-align:left; border:0; padding-right:34px}
+.mx-vt.rev:hover{filter:brightness(1.08)}
+.mx-chev{position:absolute; right:14px; top:50%; transform:translateY(-50%); font:700 22px var(--font-head); color:#FFB39E}
+.mx-modeslot{padding:0 16px; border-left:1px solid rgba(255,255,255,.08); box-shadow:none}
+.mode{border:1px solid rgba(255,255,255,.28); border-radius:10px; background:rgba(255,255,255,.04); padding:3px; gap:2px}
+.mode button{border-radius:7px; padding:7px 14px; font-size:13px; min-height:36px}
+.mode button.on{background:#fff; color:#0E2A47}
+.mode button:not(.on):hover{background:rgba(255,255,255,.08)}
+
+/* drawer: quiet rows on the dark panel, colour only in the left edge and tag */
+.mx-checks{margin-top:10px; padding:16px 18px; border-radius:16px; background:#0B2034; border:1px solid rgba(127,220,236,.12); gap:12px 22px}
+.mx-grp-h{display:flex; align-items:center; gap:8px; font:700 10.5px var(--font-head); letter-spacing:.14em; color:#8FB4C4; margin-bottom:10px}
+.mx-cklist{gap:6px}
+.mx-ck, .mx-ck.fail, .mx-ck.warn{background:rgba(255,255,255,.035); color:#E4EDF2; box-shadow:inset 3px 0 0 #F46744; border-radius:10px; padding:9px 14px 9px 16px; grid-template-columns:96px minmax(0,1fr) auto; column-gap:12px; font-size:13px; line-height:1.45}
+.mx-ck.warn{box-shadow:inset 3px 0 0 #F9A58F}
+.mx-ck .tag, .mx-ck.fail .tag, .mx-ck.warn .tag{width:auto; justify-self:start; background:transparent; border:1px solid currentColor; padding:2px 8px; border-radius:999px; font:700 9.5px var(--font-head); letter-spacing:.12em}
+.mx-ck.fail .tag{color:#FF9C82} .mx-ck.warn .tag{color:#F9C2B1}
+.mx-ck .go{color:#7FDCEC; text-decoration:none; font-weight:700; font-size:12.5px}
+.mx-ck .go:hover{text-decoration:underline}
+.mx-ck .ackbtn, .mx-ck.warn .ackbtn{background:transparent; border:1px solid #FF9C82; color:#FFD0C2; border-radius:8px; min-height:32px; padding:5px 12px; font:700 12px var(--font-body)}
+.mx-ck .ackbtn:hover{background:rgba(244,103,68,.15)}
+.mx-ck .ackbtn.on{background:rgba(127,220,236,.12); border-color:rgba(127,220,236,.5); color:#BFEFF7}
+.mx-sg{border-left:1px solid rgba(255,255,255,.08); padding-left:22px}
+.mx-sgh{font-size:13.5px} .mx-sgh span{color:#8FB4C4}
+.mx-term th{color:#8FB4C4; border-bottom-color:rgba(255,255,255,.10)}
+.mx-term td{border-bottom-color:rgba(255,255,255,.05); padding:7px 0} .mx-term td:not(:first-child){padding-left:8px}
+.mx-term td:nth-child(2){color:#5FD0E4}
+.mx-facts{color:#B9CCD6}
+@media (max-width:1100px){ .mx-bar > .mx-verdict{grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr))} .mx-vt + .mx-vt{border-left:0; border-top:1px solid rgba(255,255,255,.08)} .mx-vt:first-child{border-radius:15px 15px 0 0} }
+@media (max-width:640px){ header.app{padding:12px 16px} .mx-hmeta{display:none} .mx-ck, .mx-ck.fail, .mx-ck.warn{grid-template-columns:1fr} }
+.mx-bar .mx-vt.fail, .mx-bar .mx-vt.hero.neg, .mx-bar .mx-vt.rev, .mx-bar .mx-vt.rev.warnonly{box-shadow:none !important; border-top:0; border-right:0; border-bottom:0}
+.mx-ck .ackbtn, .mx-ck:has(.ackbtn) .ackbtn{width:auto !important; justify-self:start; margin-top:6px}
+.mx-bar .mx-vt + .mx-vt.fail, .mx-bar .mx-vt + .mx-vt.rev, .mx-bar .mx-vt + .mx-vt.hero.neg{border-left:1px solid #0B2034}
 </style>
 </head>
 <body>
@@ -1691,12 +1753,12 @@ function verdict(){
   const items=checks.filter(c=>c.status!=='pass'&&!/^NTB|^Seasoning/.test(c.text)).concat(extra);
   const fails=items.filter(c=>c.status==='fail'), first=fails[0]||items[0];
   let rev;
-  if(!items.length) rev=`<div class="mx-vt pass"><p class="k">To review</p><p class="big">${ICON_OK}All clear</p><p class="s">No checks need attention.</p></div>`;
+  if(!items.length) rev=`<div class="mx-vt pass"><p class="k">Needs attention</p><p class="big">${ICON_OK}All clear</p><p class="s">Nothing to fix</p></div>`;
   else { const miss=/^MISSING:/.test(first.text);
     let short=first.text.replace(/^(RESTRUCTURE|MISSING):\s*/,'').split(/(?<=\.)\s/)[0].replace(/\.$/,'');
     if(miss) short='Missing: '+short.split(/\s[—-]\s/)[0]; short=short.charAt(0).toUpperCase()+short.slice(1);
     const f=first.field?[null,first.field]:FIELD_FOR.find(([re])=>/^MISSING/.test(first.text)&&re.test(first.text));
-    rev=`<button type="button" class="mx-vt rev ${fails.length?'fail':'warnonly'}" data-mx-rev="${f?f[1]:''}"><p class="k">${items.length} thing${items.length===1?'':'s'} to review</p><p class="big">${escT(short)}</p><p class="s"><b>${f?'Go to the field ›':'See all checks ›'}</b></p></button>`; }
+    rev=`<button type="button" class="mx-vt rev ${fails.length?'fail':'warnonly'}" data-mx-rev="${f?f[1]:''}" aria-label="${items.length} item${items.length===1?'':'s'} need attention. ${escT(short)}"><p class="k">Needs attention</p><p class="big">${items.length} item${items.length===1?'':'s'}</p><p class="s">${escT(short)}</p><span class="mx-chev" aria-hidden="true">›</span></button>`; }
   el.innerHTML=tile(ntb,'Net tangible benefit')+tile(sea,'Seasoning')+pay+funds+rev;
   /* every open check, full text, attached under the bar (scrolls away; the tiles stay pinned) */
   let dr=document.getElementById('mxChecks');
@@ -1875,6 +1937,7 @@ window.addEventListener('resize',()=>{ clearTimeout(window.__mxFit); window.__mx
 
 function tileNotes(){ qa('#results .mx-tiles > .srow').forEach(r=>{ const sb=q('.lblc .sub',r); if(sb){ const e=q(':scope > .eye',r)&&q(':scope > .eye',r).dataset.eye;
     if(/x_escref/.test(e||'')&&/ESTIMATE/i.test(sb.textContent)) sb.textContent='From the old servicer · estimate'; sb.classList.add('mx-tnote'); r.appendChild(sb); } }); }
+(function(){ const b=q('header.app'); if(b&&!q('.mx-hmeta',b)){ const m=document.createElement('p'); m.className='mx-hmeta'; m.innerHTML='Prepared '+new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})+'<span>Rates change daily</span>'; b.appendChild(m); } })();
 const _render=render; render=function(){ _render(); restructureSheet(); verdict(); summaries(); clientView(); tileNotes(); pinBar(); };
 arrange(); render();
 })();
