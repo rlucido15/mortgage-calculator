@@ -1604,7 +1604,7 @@ full();
    Lets the Refi Engine (or anyone in the browser console) run this calculator without clicking through it.
      MX_FHA.fields()          -> every input id with its current value
      MX_FHA.run({...})        -> set inputs by id (numbers, 'YYYY-MM-DD' dates, select values, true/false checkboxes),
-                                 plus optional collectOnePayment:true|false, then recalculate and return the results
+                                 then recalculate and return the results (FHA also takes collectOnePayment:true|false)
      MX_FHA.result()          -> the latest results without changing anything
    Results include every headline number plus checks[] = {status:'pass'|'fail'|'review', text}. Uses the same
    calculations as the screen; nothing here does math of its own. */
@@ -1630,10 +1630,10 @@ render();
 })();
 </script>
 <script>
-/* ================= Streamlined layout (Nov 14) =================
+/* ================= Moxie calculator layout (shared by FHA Streamline, VA IRRRL, Conventional R&T) =================
    Re-arranges what the calculator already rendered: it moves existing rows and input fields, renames labels and
    adds a verdict strip that reads the calculator's own results (window.MX_LAST). It never computes a number,
-   never changes an input id and never touches the formulas. */
+   never changes an input id and never touches the formulas. Product differences live in CONF below. */
 (function(){
 'use strict';
 const q=(s,r)=>(r||document).querySelector(s), qa=(s,r)=>[...(r||document).querySelectorAll(s)];
@@ -1642,21 +1642,53 @@ const ICON_OK='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="1
 const ICON_NO='<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/></svg>';
 const escT=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
-/* ---------- 2. inputs: essentials card + collapsed sections ---------- */
-const SECTIONS=[
-  {key:'cur',  title:'Current loan details', ids:['fha_arm','fha_term','fha_ptype']},
-  {key:'new',  title:'New loan',             ids:['fha_nclose','fha_holding']},
-  {key:'esc',  title:'Escrows',              ids:['fha_escnow','fha_hoi','#fha_hoiauto','#fha_hoimrow','fha_tax','fha_taxfreq','fha_taxm','#fha_taxm2row']},
-  {key:'fee',  title:'Fees &amp; comp',      ids:['fha_uw','fha_proc','fha_comp']},
-  {key:'ovr',  title:'Overrides',            ids:['#fha_optslot','fha_mipnow','fha_escbal','fha_val','fha_miprate','fha_netfund']},
-  {key:'bor',  title:'Borrower',             ids:['bor_name','bor_addr','bor_zip','bor_fico']},
-  {key:'one',  title:'One-off scenarios',    ids:['fha_old','fha_inv']}
-];
-const ESS_CUR=[['fha_close','Closing date'],['fha_rate','Rate %'],['fha_price','Purchase price / value $'],['fha_dp','Down payment %'],['fha_curpay','Total payment today $']];
-const ESS_NEW=[['fha_nrate','Rate %'],['fha_nterm','Term'],['fha_title','Title fees $'],['fha_ysp','YSP %']];
+/* ---------- product setup ---------- */
+const P=S.product;                       /* 'fha' | 'va' | 'conv' */
+const BOR={key:'bor', title:'Borrower', ids:['bor_name','bor_addr','bor_zip','bor_fico']};
+const TAXES=p=>[p+'_hoi','#'+p+'_hoiauto','#'+p+'_hoimrow',p+'_tax',p+'_taxfreq',p+'_taxm','#'+p+'_taxm2row'];
+const CONF={
+  fha:{ name:'FHA Streamline',
+    essCur:[['fha_close','Closing date'],['fha_rate','Rate %'],['fha_price','Purchase price / value $'],['fha_dp','Down payment %'],['fha_curpay','Total payment today $']],
+    essNew:[['fha_nrate','Rate %'],['fha_nterm','Term'],['fha_title','Title fees $'],['fha_ysp','YSP %']],
+    sections:[
+      {key:'cur', title:'Current loan details', ids:['fha_arm','fha_term','fha_ptype']},
+      {key:'new', title:'New loan', ids:['fha_nclose','fha_holding']},
+      {key:'esc', title:'Escrows', ids:['fha_escnow'].concat(TAXES('fha'))},
+      {key:'fee', title:'Fees &amp; comp', ids:['fha_uw','fha_proc','fha_comp']},
+      {key:'ovr', title:'Overrides', ids:['#fha_optslot','fha_mipnow','fha_escbal','fha_val','fha_miprate','fha_netfund']},
+      BOR,
+      {key:'one', title:'One-off scenarios', ids:['fha_old','fha_inv']}],
+    fieldFor:[[/current total payment/i,'fha_curpay'],[/title fees/i,'fha_title'],[/original loan amount/i,'fha_oamt_ov'],[/statement balance/i,'fha_balov']],
+    tiles:['ntb','season','pay','funds','rev'] },
+  va:{ name:'VA IRRRL',
+    essCur:[['va_close','Closing date'],['va_oamt','Original loan amount $'],['va_rate','Rate %'],['va_escnow','Monthly escrow today $']],
+    essNew:[['va_nrate','Rate %'],['va_nterm','Term'],['va_title','Title fees $'],['va_pts','Points % (credit −%)'],['va_exempt','Veteran exempt — disability']],
+    sections:[
+      {key:'cur', title:'Current loan details', ids:['va_arm','va_term','va_ptype','va_balov']},
+      {key:'new', title:'New loan', ids:['va_nclose','va_holding','va_finfee','va_fincosts']},
+      {key:'esc', title:'Escrows', ids:TAXES('va').concat(['va_escbal','va_netfund','va_escfin'])},
+      {key:'fee', title:'Lender fees', ids:['va_uw','va_proc']},
+      BOR],
+    fieldFor:[[/statement balance/i,'va_balov']],
+    tiles:['season','vrate','recoup','pay','rev'] },
+  conv:{ name:'Conventional Rate & Term',
+    essCur:[['conv_close','Closing date'],['conv_oamt','Original loan amount $'],['conv_rate','Rate %'],['conv_value','Home value today $'],['conv_escnow','Monthly escrow today $']],
+    essNew:[['conv_nrate','Rate %'],['conv_nterm','Term'],['conv_ntype','Loan type'],['conv_pmi','New monthly PMI $'],['conv_title','Title fees $'],['conv_pts','Points % (credit −%)']],
+    sections:[
+      {key:'cur', title:'Current loan details', ids:['conv_arm','conv_term','conv_ptype','conv_balov','conv_mipnow']},
+      {key:'new', title:'New loan', ids:['conv_nclose','conv_holding','conv_fincosts']},
+      {key:'esc', title:'Escrows', ids:['conv_waive'].concat(TAXES('conv'),['conv_escbal','conv_netfund'])},
+      {key:'fee', title:'Lender fees', ids:['conv_uw','conv_proc','conv_appr']},
+      BOR],
+    fieldFor:[[/statement balance/i,'conv_balov'],[/estimated home value/i,'conv_value']],
+    tiles:['crate','ltv','be','pay','rev'] }
+}[P]||{name:'Calculator',essCur:[],essNew:[],sections:[BOR],fieldFor:[],tiles:['pay','rev']};
+const SECTIONS=CONF.sections, ESS_CUR=CONF.essCur, ESS_NEW=CONF.essNew;
+
+/* ---------- 2. inputs: essentials cards + collapsed sections ---------- */
 const pick=sel=>sel[0]==='#'?document.getElementById(sel.slice(1)):rowOf(sel);
 function arrange(){
-  const box=document.getElementById('inputs'); if(!box||!document.getElementById('fha_close')||q('.mx-ess',box)) return;
+  const box=document.getElementById('inputs'); if(!box||!document.getElementById(P+'_close')||q('.mx-ess',box)) return;
   const open={}; /* nothing to restore on first build */
   const ess=document.createElement('section'); ess.className='mx-ess'; ess.setAttribute('aria-label','Essentials');
   ess.innerHTML='<div class="card mx-esscard"><h2>Current loan</h2><div class="body" id="mxEssCur"></div></div><div class="card mx-esscard"><h2>New loan</h2><div class="body" id="mxEssNew"></div></div>';
@@ -1679,24 +1711,33 @@ const v=id=>{ const el=document.getElementById(id); if(!el) return ''; return el
 const selTxt=id=>{ const el=document.getElementById(id); return el&&el.selectedOptions&&el.selectedOptions[0]?el.selectedOptions[0].textContent:''; };
 function summaries(){
   const set=(k,t)=>{ const el=q(`[data-sum="${k}"]`); if(el) el.textContent=t; };
-  set('cur',[selTxt('fha_ptype'),selTxt('fha_term'),v('fha_arm')?'ARM':''].filter(Boolean).join(' · '));
-  const nc=parseDate(v('fha_nclose'));
-  set('new',(nc?'Closes '+fmtDate(nc):'No closing date')+' · '+(v('fha_holding')?'holding payment':'not holding'));
-  set('esc',[v('fha_escnow')?'$'+v('fha_escnow')+'/mo':'',v('fha_hoi')?'HOI $'+v('fha_hoi'):'',v('fha_tax')?'tax $'+v('fha_tax'):''].filter(Boolean).join(' · '));
-  set('fee','UW $'+(v('fha_uw')||'0')+(v('fha_proc')?' + processor':'')+' · comp '+(v('fha_comp')||'0').replace(/%?$/,'%'));
-  const ov=['fha_oamt_ov','fha_balov','fha_mipnow','fha_escbal','fha_val'].filter(id=>v(id)!==''&&document.getElementById(id)&&document.getElementById(id).closest('#fha_reqslot')===null).length
-    +(v('fha_miprate')&&v('fha_miprate')!=='auto'?1:0)+(v('fha_netfund')?1:0);
-  set('ovr',ov?ov+' set':'None set');
+  const money=id=>v(id)?'$'+v(id):'';
+  const nc=parseDate(v(P+'_nclose'));
+  const closes=(nc?'Closes '+fmtDate(nc):'No closing date')+' · '+(v(P+'_holding')?'holding payment':'not holding');
+  const escTxt=[v(P+'_escnow')?'$'+v(P+'_escnow')+'/mo':'',v(P+'_hoi')?'HOI $'+v(P+'_hoi'):'',v(P+'_tax')?'tax $'+v(P+'_tax'):''].filter(Boolean).join(' · ');
+  set('cur',[selTxt(P+'_ptype'),selTxt(P+'_term'),v(P+'_arm')?'ARM':'',P!=='fha'&&v(P+'_balov')?'balance '+money(P+'_balov'):'',P==='conv'&&parseFloat(v('conv_mipnow'))>0?'PMI '+money('conv_mipnow'):''].filter(Boolean).join(' · '));
   set('bor',v('bor_name')||'No name');
-  set('one',[v('fha_old')?'Pre-6/2009':'',v('fha_inv')?'Investment':''].filter(Boolean).join(' · ')||'None');
-  /* essentials counter: the fields the calculator flags as REQUIRED */
-  const need=['fha_curpay','fha_title'].concat(v('fha_ptype')==='refi'?['fha_oamt_ov']:[]).concat(v('fha_arm')?['fha_balov']:[]);
-  const miss=need.filter(id=>!(parseFloat(String(v(id)).replace(/[,$%\s]/g,''))>0)).length;
-  const c=document.getElementById('mxEssCount'); if(c){ c.textContent=miss?miss+' required missing':'All required filled'; c.className=miss?'miss':''; }
+  if(P==='fha'){
+    set('new',closes);
+    set('esc',escTxt);
+    set('fee','UW $'+(v('fha_uw')||'0')+(v('fha_proc')?' + processor':'')+' · comp '+(v('fha_comp')||'0').replace(/%?$/,'%'));
+    const ov=['fha_oamt_ov','fha_balov','fha_mipnow','fha_escbal','fha_val'].filter(id=>v(id)!==''&&document.getElementById(id)&&document.getElementById(id).closest('#fha_reqslot')===null).length
+      +(v('fha_miprate')&&v('fha_miprate')!=='auto'?1:0)+(v('fha_netfund')?1:0);
+    set('ovr',ov?ov+' set':'None set');
+    set('one',[v('fha_old')?'Pre-6/2009':'',v('fha_inv')?'Investment':''].filter(Boolean).join(' · ')||'None');
+  } else if(P==='va'){
+    set('new',[nc?'Closes '+fmtDate(nc):'No closing date', v('va_finfee')&&v('va_fincosts')?'all financed':v('va_finfee')?'fee financed':v('va_fincosts')?'costs financed':'paid at closing'].join(' · '));
+    set('esc',escTxt);
+    set('fee','UW $'+(v('va_uw')||'0')+(v('va_proc')?' + processor':''));
+  } else if(P==='conv'){
+    set('new',[nc?'Closes '+fmtDate(nc):'No closing date', v('conv_fincosts')?'costs financed':'costs paid'].join(' · '));
+    set('esc',v('conv_waive')?'Escrows waived':escTxt);
+    set('fee','UW $'+(v('conv_uw')||'0')+(v('conv_proc')?' + processor':'')+(v('conv_appr')?' · appraisal $'+v('conv_appr'):''));
+  }
 }
 
 /* ---------- 4. sheet: three blocks, plain-word differences ---------- */
-const keyRow=(sheet,id)=>{ const b=q(`.srow > .eye[data-eye="fha:${id}"]`,sheet); return b?b.parentElement:null; };
+const keyRow=(sheet,id)=>{ const b=q(`.srow > .eye[data-eye="${P}:${id}"]`,sheet); return b?b.parentElement:null; };
 function setLabel(row,txt){ const l=row&&q('.lblc',row); if(!l) return; const t=[...l.childNodes].find(n=>n.nodeType===3); if(t) t.textContent=txt; else l.insertBefore(document.createTextNode(txt),l.firstChild); }
 function addSub(cell,txt){ if(!cell||!txt) return; const s=document.createElement('span'); s.className='mx-vs'; s.textContent=txt; cell.appendChild(s); }
 function sect(t){ const d=document.createElement('div'); d.className='srow'; d.innerHTML=(S.client?'':'<span></span>')+'<div class="secttl">'+t+'</div>'; return d; }
@@ -1725,7 +1766,7 @@ function restructureSheet(){
     setLabel(cb,'Loan balance');
     bal.remove();
   }
-  if(cb&&!cb.classList.contains('missingrow')){ const l=q('.lblc',cb); if(l&&!q('.sub',l)){ const s=document.createElement('span'); s.className='sub subc'; s.textContent=gv('fha_balov',0)>0?'today’s from the statement':'today’s is an estimate'; l.appendChild(s); } }
+  if(cb&&!cb.classList.contains('missingrow')){ const l=q('.lblc',cb); if(l&&!q('.sub',l)){ const s=document.createElement('span'); s.className='sub subc'; s.textContent=gv(P+'_balov',0)>0?'today’s from the statement':'today’s is an estimate'; l.appendChild(s); } }
   /* term: fold payments made / left into it */
   const term=R('term'), pm=R('pmade'), pl=R('pleft');
   if(term&&pm&&pl){
@@ -1756,6 +1797,7 @@ function restructureSheet(){
   const big=(t,cls)=>`<span class="${cls||'g'}">${escT(t)}</span>`;
   const payH=/ lower$/.test(totD)?big(totD.replace(/ lower$/,' lower'))+' a month':/ more$/.test(totD)?big(totD,'b')+' a month':'Your payment';
   const loanH=/ less$/.test(intD)?big(intD)+' interest':/ more$/.test(intD)?big(intD,'b')+' interest':'Your loan';
+  const beRow=R('x_be'), beV=beRow?((beRow.children[3]||{}).textContent||'').trim():'';
   const closeH=cashV.trim()&&cashV.trim()!=='—'?big(cashV.trim(),cashBad?'b':'n')+' due':'At closing';
   const th='<div class="srow mx-th"><span></span><span></span><span>Today</span><span>New</span><span>Difference</span></div>';
   const card=(cls,k,h,rows,withTh)=>{ const c=document.createElement('section'); c.className='mx-scard '+cls; c.innerHTML=head(k,h)+(withTh?th:''); rows.forEach(n=>c.appendChild(n)); return c; };
@@ -1768,7 +1810,7 @@ function restructureSheet(){
   frag.appendChild(cc);
   /* "Every year" folds under the total's difference; its eye still controls the client sheet */
   if(ys&&tr&&tr.children[4]){ const vc=[...ys.children].filter(c=>c.classList.contains('vbox')&&!c.classList.contains('blank')).pop(); const v=vc?(vc.querySelector('span')||vc).textContent.replace(/\/yr$/,''):''; if(v.trim()){ const sp=document.createElement('span'); sp.className='mx-yr'+(ys.classList.contains('off')?' off':'');
-    sp.innerHTML=`${escT(v.trim())} a year <button type="button" class="eye mx-yreye" data-eye="fha:ysave" aria-label="Show or hide the yearly amount for the client" title="Show/hide for client"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.6"></circle></svg></button>`;
+    sp.innerHTML=`${escT(v.trim())} a year <button type="button" class="eye mx-yreye" data-eye="${P}:ysave" aria-label="Show or hide the yearly amount for the client" title="Show/hide for client"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-6.5 10-6.5S22 12 22 12s-3.5 6.5-10 6.5S2 12 2 12Z"></path><circle cx="12" cy="12" r="2.6"></circle></svg></button>`;
     tr.children[4].appendChild(sp); } ys.classList.add('mx-folded'); }
   const nHid=[...pay,...loan,...close].filter(n=>n.classList.contains('off')&&!n.classList.contains('missingrow')).length;
   if(nHid){ const p=document.createElement('p'); p.className='mx-hidden-line';
@@ -1789,7 +1831,7 @@ function restructureSheet(){
     ds.appendChild(n); });
   const sm=q('[data-tgl="showMore"]',ds); if(sm){ sm.innerHTML='<span class="mx-bi" aria-hidden="true">⤢</span>View Max Loan Calc'; sm.setAttribute('aria-haspopup','dialog'); sm.classList.add('mx-pbtn'); }
   /* long notes under a row become an ⓘ tooltip (same text) */
-  ['b_escprep','b_effcomp'].forEach(id=>{ const b=q(`.srow > .eye[data-eye="fha:${id}"]`,ds), sb=b&&q('.lblc .sub',b.parentElement);
+  ['b_escprep','b_effcomp'].forEach(id=>{ const b=q(`.srow > .eye[data-eye="${P}:${id}"]`,ds), sb=b&&q('.lblc .sub',b.parentElement);
     if(sb){ const t=sb.textContent.trim(); const tip=document.createElement('button'); tip.type='button'; tip.className='mx-tip'; tip.setAttribute('aria-label',t); tip.dataset.tip=t; tip.textContent='i'; sb.replaceWith(tip); } });
   const cr=q('[data-tgl="fhaBring"]',ds); if(cr){ const sb=q('.lblc .sub',cr.closest('.srow')); if(sb) sb.remove(); }
   panel.prepend(ds);
@@ -1799,7 +1841,7 @@ function restructureSheet(){
 }
 
 /* ---------- 1. verdict strip ---------- */
-const FIELD_FOR=[[/current total payment/i,'fha_curpay'],[/title fees/i,'fha_title'],[/original loan amount/i,'fha_oamt_ov'],[/statement balance/i,'fha_balov']];
+const FIELD_FOR=CONF.fieldFor;
 function verdict(){
   const r=window.MX_LAST; let el=document.getElementById('mxVerdict');
   if(!el){ el=document.createElement('section'); el.id='mxVerdict'; el.className='mx-verdict'; el.setAttribute('aria-label','Verdict'); const g=q('.wrap > .grid'); if(!g) return;
@@ -1809,18 +1851,34 @@ function verdict(){
     bar.appendChild(el); bar.appendChild(slot); g.before(bar); }
   if(!r){ el.innerHTML=''; return; }
   const checks=r.checks||[];
-  const ntb=checks.find(c=>/^NTB/.test(c.text)), sea=checks.find(c=>/^Seasoning/.test(c.text));
-  const rest=t=>t.replace(/^(NTB|Seasoning) (passed|fails)\s*(—|-)?\s*/i,'');
-  const tile=(c,label)=>{ const ok=c&&c.status==='pass';
-    return `<div class="mx-vt ${ok?'pass':'fail'}"><p class="k">${label}</p><p class="big">${ok?ICON_OK:ICON_NO}${ok?(label==='Seasoning'?'Met':'Passes'):'Fails'}</p>${ok?'':`<p class="s">${escT(c?rest(c.text):'')}</p>`}</div>`; };
-  const sv=r.monthlySavings, good=sv>=0;
-  const pay=`<div class="mx-vt hero ${good?'':'neg'}"><p class="k">Monthly payment</p><p class="big">${fmt$(Math.abs(sv))} ${good?'lower':'higher'}</p></div>`;
-  const fsub=(()=>{ const b=keyRow(q('#results .sheet')||document,'b_cash'); const s=b&&q('.lblc .sub',b); return s?s.textContent:''; })();
-  const cashBad=(()=>{ const r2=keyRow(q('#results .sheet')||document,'b_cash'); return !!(r2&&q('.vbox.bad',r2)); })();
-  const funds=`<div class="mx-vt ${cashBad?'fail':''}"><p class="k">Funds due at closing</p><p class="big">${fmt$(r.fundsDueAtClosing)}</p><p class="s">${escT(fsub)}</p></div>`;
+  const sheetEl=q('#results .sheet')||document;
+  const rowVal=id=>{ const rr=keyRow(sheetEl,id); return rr?((rr.children[3]||{}).textContent||'').trim():''; };
+  const cTile=(label,c,ok,fail,sub)=>{ const pass=c&&c.status==='pass';
+    return `<div class="mx-vt ${pass?'pass':'fail'}"><p class="k">${label}</p><p class="big">${pass?ICON_OK:ICON_NO}${escT(pass?ok:fail)}</p>${pass||!sub?'':`<p class="s">${escT(sub)}</p>`}</div>`; };
+  const find=re=>checks.find(c=>re.test(c.text));
+  const pct=(c,re)=>{ const m=c&&c.text.match(re); return m?m[1]:''; };
+  const TILE_RE={ntb:/^NTB/, season:/^Seasoning/, vrate:/^(Rate drop|ARM→fixed)/, recoup:/^Recoupment/, crate:/^Rate drop/};
+  const T={
+    ntb:()=>{ const c=find(TILE_RE.ntb); return cTile('Net tangible benefit',c,'Passes','Fails',c&&c.text.replace(/^NTB (passed|fails)\s*(—|-)?\s*/i,'')); },
+    season:()=>{ const c=find(TILE_RE.season); return cTile('Seasoning',c,'Met',P==='fha'?'Fails':'Not yet',c&&c.text.replace(/^Seasoning (passed|fails|met|not)?\s*(—|-)?\s*/i,'')); },
+    vrate:()=>{ const c=find(TILE_RE.vrate); if(c&&/^ARM→fixed/.test(c.text)) return cTile('Rate drop',c,'ARM → fixed','ARM → fixed','');
+      const d=pct(c,/Rate drop ([−\-]?[\d.]+%)/); return cTile('Rate drop',c,d,d||'—','needs 0.5% or more'); },
+    recoup:()=>{ const c=find(TILE_RE.recoup); const m=pct(c,/Recoupment (\S+(?: mo)?)/); return cTile('Recoupment',c,m,m||'—','needs 36 months or less'); },
+    crate:()=>{ const c=find(TILE_RE.crate); const d=pct(c,/Rate drop ([−\-]?[\d.]+%)/); return cTile('Rate drop',c,d,d||'—','new rate isn’t lower'); },
+    ltv:()=>{ const v2=rowVal('b_ltv'); const miss=!v2||/REQUIRED/.test(v2);
+      return `<div class="mx-vt ${miss?'fail':''}"><p class="k">Loan-to-value</p><p class="big">${miss?'Needed':escT(v2)}</p>${miss?'<p class="s">Enter the home value</p>':''}</div>`; },
+    be:()=>{ const v2=rowVal('x_be'); return `<div class="mx-vt"><p class="k">Costs paid back in</p><p class="big">${escT(v2&&v2!=='—'?v2:'—')}</p>${v2&&v2!=='—'?'':'<p class="s">No monthly savings</p>'}</div>`; },
+    pay:()=>{ const sv=r.monthlySavings, good=sv>=0; return `<div class="mx-vt hero ${good?'':'neg'}"><p class="k">Monthly payment</p><p class="big">${fmt$(Math.abs(sv))} ${good?'lower':'higher'}</p></div>`; },
+    funds:()=>{ const b=keyRow(sheetEl,'b_cash'); const s2=b&&q('.lblc .sub',b); const bad=!!(b&&q('.vbox.bad',b));
+      return `<div class="mx-vt ${bad?'fail':''}"><p class="k">Funds due at closing</p><p class="big">${fmt$(r.fundsDueAtClosing)}</p><p class="s">${escT(s2?s2.textContent:'')}</p></div>`; },
+    rev:()=>rev
+  };
+  const tileRes=CONF.tiles.filter(k=>TILE_RE[k]).map(k=>TILE_RE[k]);
   const extra=[]; { const er=keyRow(q('#results .sheet')||document,'x_escref'), es=er&&q('.lblc .sub',er);
-    if(es&&/ESTIMATE/i.test(es.textContent)) extra.push({status:'review', text:'Escrow refund is an estimate — enter the statement escrow balance to confirm.', field:'fha_escbal'}); }
-  const items=checks.filter(c=>c.status!=='pass'&&!/^NTB|^Seasoning/.test(c.text)).concat(extra);
+    if(es&&/ESTIMATE/i.test(es.textContent)) extra.push({status:'review', text:'Escrow refund is an estimate — enter the statement escrow balance to confirm.', field:P+'_escbal'});
+    /* VA / Conventional show a missing title quote only as a REQUIRED row: list it here too (FHA already has a check for it) */
+    const tr2=keyRow(document,'b_title'); if(P!=='fha'&&tr2&&tr2.classList.contains('missingrow')) extra.unshift({status:'fail', text:'MISSING: title fees — get a title quote and enter it.', field:P+'_title'}); }
+  const items=checks.filter(c=>c.status!=='pass'&&!tileRes.some(re=>re.test(c.text))).concat(extra);
   const fails=items.filter(c=>c.status==='fail'), first=fails[0]||items[0];
   let rev;
   if(!items.length) rev=`<div class="mx-vt pass"><p class="k">Needs attention</p><p class="big">${ICON_OK}All clear</p><p class="s">Nothing to fix</p></div>`;
@@ -1829,7 +1887,7 @@ function verdict(){
     if(miss) short='Missing: '+short.split(/\s[—-]\s/)[0]; short=short.charAt(0).toUpperCase()+short.slice(1);
     const f=first.field?[null,first.field]:FIELD_FOR.find(([re])=>/^MISSING/.test(first.text)&&re.test(first.text));
     rev=`<button type="button" class="mx-vt rev ${fails.length?'fail':'warnonly'}" data-mx-rev="${f?f[1]:''}" aria-label="${items.length} item${items.length===1?'':'s'} need attention. ${escT(short)}"><p class="k">Needs attention</p><p class="big">${items.length} item${items.length===1?'':'s'}</p><p class="s">${escT(short)}</p><span class="mx-chev" aria-hidden="true">›</span></button>`; }
-  el.innerHTML=tile(ntb,'Net tangible benefit')+tile(sea,'Seasoning')+pay+funds+rev;
+  el.innerHTML=CONF.tiles.map(k=>T[k]()).join('');
   /* every open check, full text, attached under the bar (scrolls away; the tiles stay pinned) */
   let dr=document.getElementById('mxChecks');
   if(!dr){ dr=document.createElement('section'); dr.id='mxChecks'; dr.className='mx-checks'; dr.setAttribute('aria-label','Checks'); (document.getElementById('mxBar')||el).after(dr); }
@@ -1838,7 +1896,7 @@ function verdict(){
   const sugs=(r.suggestions||[]).filter(t=>!/no comp bump from collect-1-payment/.test(t));
   if(!open.length&&!sugs.length){ dr.innerHTML=''; dr.hidden=true; return; }
   dr.hidden=false;
-  const tagOf=t=>/^MISSING:/.test(t)?'Missing':/^RESTRUCTURE:/.test(t)?'Restructure':/^(NTB|Seasoning)/.test(t)?t.split(' ')[0]:'Review';
+  const tagOf=t=>/^MISSING:/.test(t)?'Missing':/^RESTRUCTURE:/.test(t)?'Restructure':/^(NTB|Seasoning|Recoupment)/.test(t)?t.split(' ')[0]:/^(Rate drop|ARM→fixed)/.test(t)?'Rate':'Review';
   const list=open.length?'<ul class="mx-cklist">'+open.map(c=>{ const tag=tagOf(c.text), tx0=c.text.replace(/^(MISSING|RESTRUCTURE):\s*/,'').replace(/ under Funds Due/,''), tx=tx0.charAt(0).toUpperCase()+tx0.slice(1);
     const f=c.field?[null,c.field]:(/^MISSING/.test(c.text)&&FIELD_FOR.find(([re])=>re.test(c.text)));
     return `<li class="mx-ck ${c.status==='fail'?'fail':'warn'}"><span class="tag">${tag}</span><span class="tx">${escT(tx)}</span>${f?`<button type="button" class="go" data-mx-rev="${f[1]}">Go to field ›</button>`:''}</li>`; }).join('')+'</ul>'
@@ -1886,7 +1944,7 @@ function openPop(title,sub,body){
   if(!ov){ ov=document.createElement('div'); ov.id='mxModal'; ov.className='mx-modal'; document.body.appendChild(ov);
     ov.addEventListener('click',e=>{ if(e.target===ov||e.target.closest('[data-mx-close]')) closeMaxLoan(); }); }
   ov.innerHTML=`<div class="mx-dlg" role="dialog" aria-modal="true" aria-labelledby="mxDlgT">
-    <div class="mx-dlg-h"><div><p class="k">FHA Streamline</p><h2 id="mxDlgT">${escT(title)}</h2><p class="s">${escT(sub)}</p></div>
+    <div class="mx-dlg-h"><div><p class="k">${escT(CONF.name)}</p><h2 id="mxDlgT">${escT(title)}</h2><p class="s">${escT(sub)}</p></div>
     <button type="button" class="mx-x" data-mx-close aria-label="Close">✕</button></div>
     ${body}
     <div class="mx-dlg-f"><button type="button" class="mx-done" data-mx-close>Done</button></div></div>`;
@@ -1963,7 +2021,7 @@ function clientView(){
   const R=id=>keyRow(sheet,id), shown=id=>{ const r=R(id); return !!r&&!r.classList.contains('off'); };
   const txt=(row,i)=>{ const c=row&&row.children[i]; if(!c) return ''; return [...c.childNodes].filter(n=>n.nodeType===3||(n.tagName&&!n.classList.contains('mx-vs')&&!n.classList.contains('eye'))).map(n=>n.textContent).join('').trim(); };
   const sub=(row)=>{ const s=row&&q('.lblc .sub',row); return s?s.textContent.trim():''; };
-  const dOn=k=>!S.hidden['fha:'+k];
+  const dOn=k=>!S.hidden[P+':'+k];
   const r=window.MX_LAST||{}; const E=escT;
   /* date in the header row */
   const sh=q('.shead',sheet); if(sh&&!q('.mx-cvdate',sh)){ const d=document.createElement('div'); d.className='mx-cvdate'; d.innerHTML='Prepared '+new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})+'<span>Rates change daily</span>'; sh.appendChild(d); }
@@ -2012,6 +2070,7 @@ function clientView(){
   if(shown('b_cash')) tl2.push(['Funds due at closing',txt(R('b_cash'),3),sub(R('b_cash'))]);
   if(shown('x_skip')) tl2.push(['Payments you skip',txt(R('x_skip'),3),sub(R('x_skip'))]);
   if(shown('x_escref')) tl2.push(['Escrow refund',txt(R('x_escref'),3),'From your current servicer'+(r.escrowRefundEstimated?' · estimate':' · about 30 days after payoff')]);
+  if(shown('x_be')) tl2.push(['Closing costs paid back in',txt(R('x_be'),3),'From your monthly savings']);
   const cn=sheet.querySelector('.cnote'), cnRow=cn&&cn.closest('.srow'), cnOn=cn&&!cnRow.classList.contains('off');
   if(tl2.length||cnOn){ h+=`<p class="cv-sect">At closing</p>`+(tl2.length?`<div class="cv-three">${tl2.map(t=>`<div class="cv-tile"><p class="k">${E(t[0])}</p><p class="n">${E(t[1])}</p><p class="s">${E(t[2])}</p></div>`).join('')}</div>`:'')+(cnOn?`<p class="cv-note">${E(cn.textContent)}</p>`:''); }
   /* 5. disclosures */

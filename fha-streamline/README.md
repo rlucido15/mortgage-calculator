@@ -38,20 +38,9 @@ The API reads the calculator's own results. It never does math of its own.
 fha-streamline/
   index.html          built calculator; this is the file to use or host
   embed-snippet.html  paste into the Lofty page
-  src/
-    original.html     the calculator as it was handed over (formulas live here)
-    build.py          builds index.html from original.html and the files below
-    moxie-skin.css    brand look (Barlow, colors, cards)
-    *-layout.css/js   layout: verdict bar, checks, cards, client view, pop-outs, embedding
-    assets/           Barlow fonts and Moxie wordmarks
-  tests/
-    compare.py        proves the numbers match original.html and the controls work
+  src/original.html   the calculator as it was handed over (formulas live here)
+  tests/compare.py    proves the numbers match original.html and the controls work
 ```
 
-## Changing a calculator
-
-1. Edit the files in `src/`. Change `original.html` only when you mean to change the math.
-2. `cd fha-streamline/src && python3 build.py`
-3. `python3 ../tests/compare.py`. Every test case must print `OK`.
-4. Commit `src/`, `tests/` and the rebuilt `index.html` together. GitHub Pages republishes on push to `main`.
-
+The design layer (brand skin, layout script, fonts, logos and the build script) is shared with the VA IRRRL and
+Conventional R&T worksheets and lives in `../shared/`. See the repo README for how to change and rebuild.
